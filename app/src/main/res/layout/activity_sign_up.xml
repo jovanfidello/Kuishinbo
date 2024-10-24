@@ -24,7 +24,7 @@
         android:id="@+id/email"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="Email Student"
+        android:hint="Email"
         android:background="@drawable/edit_text_background"
         app:layout_constraintTop_toBottomOf="@id/app_logo"
         app:layout_constraintStart_toStartOf="parent"
