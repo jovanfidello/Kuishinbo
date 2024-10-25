@@ -42,4 +42,38 @@ class MainActivity : AppCompatActivity() {
         // Set default selection
         bottomNavigationView.selectedItemId = R.id.nav_home
     }
+
+    fun navigateToHomeFragment() {
+        val selectedFragment = HomeFragment()
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, selectedFragment)
+            .addToBackStack(null)
+            .commit()
+
+        val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        bottomNavigationView.selectedItemId = R.id.nav_home
+    }
+
+    fun navigateToSettingFragment() {
+        val selectedFragment = SettingFragment()
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, selectedFragment)
+            .addToBackStack(null)
+            .commit()
+
+        val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        bottomNavigationView.selectedItemId = R.id.nav_setting
+    }
+
+    fun navigateToCalenderFragment() {
+        val selectedFragment = CalenderFragment()
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, selectedFragment)
+            .addToBackStack(null)
+            .commit()
+
+        val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        bottomNavigationView.selectedItemId = R.id.nav_calender
+    }
+
 }
