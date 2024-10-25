@@ -55,36 +55,34 @@ class PreviewFragment : Fragment() {
         storage = FirebaseStorage.getInstance()
 
         val imageView = view.findViewById<ImageView>(R.id.preview_image)
-        val dateTimeTextView = view.findViewById<TextView>(R.id.date_time_text)
-        val entryTypeTextView = view.findViewById<TextView>(R.id.entry_type_text)
         val nextButton = view.findViewById<Button>(R.id.next_button)
         val retakeButton = view.findViewById<Button>(R.id.retake_button)
 
         val filePath = arguments?.getString(ARG_FILE_PATH)
         var date: Date? = null
 
-        if (filePath != null) {
-            val imgFile = File(filePath)
-            if (imgFile.exists()) {
-                val bitmap = BitmapFactory.decodeFile(imgFile.absolutePath)
-                imageView.setImageBitmap(bitmap)
-
-                val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-                date = Date(imgFile.lastModified())
-                dateTimeTextView.text = dateFormat.format(date)
-            }
-        }
+//        if (filePath != null) {
+//            val imgFile = File(filePath)
+//            if (imgFile.exists()) {
+//                val bitmap = BitmapFactory.decodeFile(imgFile.absolutePath)
+//                imageView.setImageBitmap(bitmap)
+//
+//                val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+//                date = Date(imgFile.lastModified())
+//                dateTimeTextView.text = dateFormat.format(date)
+//            }
+//        }
 
         // Cek apakah user sudah melakukan absensi hari ini
-        checkTodayEntry(auth.currentUser?.email ?: "", entryTypeTextView, nextButton)
-
-        nextButton.setOnClickListener {
-            if (filePath != null && date != null) {
-                uploadImageAndSaveEntry(filePath, date) { entryType ->
-                    entryTypeTextView.text = entryType
-                }
-            }
-        }
+//        checkTodayEntry(auth.currentUser?.email ?: "", entryTypeTextView, nextButton)
+//
+//        nextButton.setOnClickListener {
+//            if (filePath != null && date != null) {
+//                uploadImageAndSaveEntry(filePath, date) { entryType ->
+//                    entryTypeTextView.text = entryType
+//                }
+//            }
+//        }
 
         retakeButton.setOnClickListener {
             parentFragmentManager.popBackStack()

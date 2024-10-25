@@ -1,7 +1,6 @@
 package com.example.kuishinbo
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
@@ -29,6 +28,10 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlin.math.sqrt
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.abs
 
 class CameraFragment : Fragment() {
 
@@ -38,10 +41,12 @@ class CameraFragment : Fragment() {
     private lateinit var imageCapture: ImageCapture
     private var isFlashEnabled = false
     private var isCameraFront = false
-    private var hasFlash = false  // Add this variable to track flash availability
+    private var hasFlash = false
+    private var scaleFactor = 1f
+    private var lastSpacing = 0f
 
     private var cameraProvider: ProcessCameraProvider? = null
-    private var camera: Camera? = null  // Add this to control camera features
+    private var camera: Camera? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -126,13 +131,59 @@ class CameraFragment : Fragment() {
         }
     }
 
+    private fun setupPinchToZoom() {
+        previewView.setOnTouchListener(object : View.OnTouchListener {
+            override fun onTouch(view: View?, event: MotionEvent): Boolean {
+                when (event.action and MotionEvent.ACTION_MASK) {
+                    MotionEvent.ACTION_POINTER_DOWN -> {
+                        lastSpacing = getFingerSpacing(event)
+                    }
+                    MotionEvent.ACTION_MOVE -> {
+                        if (event.pointerCount == 2) {
+                            val currentSpacing = getFingerSpacing(event)
+                            if (lastSpacing != 0f) {
+                                val delta = currentSpacing - lastSpacing
+                                // Menghilangkan threshold untuk mengurangi delay
+                                scaleFactor = when {
+                                    delta > 0 -> min(scaleFactor * 1.05f, camera?.cameraInfo?.zoomState?.value?.maxZoomRatio ?: 8f)
+                                    else -> max(scaleFactor * 0.95f, camera?.cameraInfo?.zoomState?.value?.minZoomRatio ?: 1f)
+                                }
+                                // Menggunakan setLinearZoom untuk respons yang lebih cepat
+                                camera?.cameraControl?.setZoomRatio(scaleFactor)?.runCatching {
+                                    addListener({
+                                        // Update UI di main thread
+                                        requireActivity().runOnUiThread {
+                                            zoomTextView.text = String.format("%.1fx", scaleFactor)
+                                        }
+                                    }, ContextCompat.getMainExecutor(requireContext()))
+                                }
+                            }
+                            lastSpacing = currentSpacing
+                        }
+                    }
+                    MotionEvent.ACTION_UP,
+                    MotionEvent.ACTION_POINTER_UP,
+                    MotionEvent.ACTION_CANCEL -> {
+                        lastSpacing = 0f
+                    }
+                }
+                return true
+            }
+        })
+    }
+
+    private fun getFingerSpacing(event: MotionEvent): Float {
+        val x = event.getX(0) - event.getX(1)
+        val y = event.getY(0) - event.getY(1)
+        return sqrt((x * x + y * y).toDouble()).toFloat()
+    }
+
     private fun requestCameraPermission() {
         when {
             allPermissionsGranted() -> {
                 startCamera()
             }
             shouldShowRequestPermissionRationale(Manifest.permission.CAMERA) -> {
-                // Show an explanation to the user
                 Toast.makeText(
                     requireContext(),
                     "Camera permission is required for this feature",
@@ -198,12 +249,11 @@ class CameraFragment : Fragment() {
                             imageCapture
                         )
 
-                        // Initialize flash state
+                        // Initialize flash state and zoom controls
                         if (!isCameraFront && hasFlash) {
                             camera?.cameraControl?.enableTorch(isFlashEnabled)
-
-                            setupZoomControls()
                         }
+                        setupZoomControls()
 
                     } catch (exc: Exception) {
                         Log.e(TAG, "Use case binding failed", exc)
@@ -234,30 +284,17 @@ class CameraFragment : Fragment() {
 
     private fun setupZoomControls() {
         camera?.let { cam ->
-            val cameraControl = cam.cameraControl
             val cameraInfo = cam.cameraInfo
 
-            val zoomState = cameraInfo.zoomState
-            zoomState.observe(viewLifecycleOwner) { state ->
-                zoomTextView.text = String.format("%.1fx", state.zoomRatio)
-            }
-        }
-    }
-
-    private fun setupPinchToZoom() {
-        previewView.setOnTouchListener { _, event ->
-            when (event.action) {
-                MotionEvent.ACTION_MOVE -> {
-                    val zoomRatio = camera?.cameraInfo?.zoomState?.value?.zoomRatio ?: 1f
-                    val pinchDelta = event.getPointerId(0).toFloat()
-                    camera?.cameraControl?.setZoomRatio(zoomRatio + pinchDelta * 0.01f)
-                    true
+            // Menggunakan Flow untuk observasi yang lebih efisien
+            cameraInfo.zoomState.observe(viewLifecycleOwner) { state ->
+                scaleFactor = state.zoomRatio
+                requireActivity().runOnUiThread {
+                    zoomTextView.text = String.format("%.1fx", state.zoomRatio)
                 }
-                else -> false
             }
         }
     }
-
 
     private fun takePhoto() {
         val imageCapture = imageCapture ?: return
@@ -329,6 +366,7 @@ class CameraFragment : Fragment() {
         // Apply the matrix to the bitmap
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, false)
     }
+
     private fun saveMirroredImageToFile(mirroredBitmap: Bitmap, photoFile: File) {
         try {
             val fos = photoFile.outputStream()
@@ -360,6 +398,8 @@ class CameraFragment : Fragment() {
 
     companion object {
         private const val TAG = "CameraFragment"
+        private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
+        private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
     }
 }

@@ -8,34 +8,13 @@
 
     <ImageView
         android:id="@+id/preview_image"
-        android:layout_width="300dp"
-        android:layout_height="300dp"
+        android:layout_width="350dp"
+        android:layout_height="400dp"
         android:layout_gravity="center"
+        android:layout_marginTop="50dp"
         android:scaleType="fitCenter"
         android:adjustViewBounds="true"
         android:background="@drawable/image_preview_background"
-        android:layout_marginBottom="24dp"/>
-
-    <!-- Date and time section -->
-    <TextView
-        android:id="@+id/date_time_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:textSize="18sp"
-        android:textColor="#333333"
-        android:background="@drawable/border_background"
-        android:layout_marginBottom="16dp"
-        android:textStyle="bold"/>
-
-    <!-- Entry type or description -->
-    <TextView
-        android:id="@+id/entry_type_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:textSize="16sp"
-        android:textColor="#666666"
         android:layout_marginBottom="24dp"/>
 
     <!-- Next and Back buttons with rounded corners -->
@@ -62,7 +41,7 @@
             android:layout_height="wrap_content"
             android:backgroundTint="#4CAF50"
             android:textColor="#FFFFFF"
-            android:text="Next"
+            android:text="Add Place"
             android:background="@drawable/button_background"/>
     </LinearLayout>
 </LinearLayout>
