@@ -16,9 +16,10 @@
         android:layout_height="24dp"
         android:layout_marginTop="16dp"
         android:layout_marginStart="16dp"
-        android:background="@null"
         android:src="@drawable/back"
+        android:background="@null"
         android:contentDescription="Back"
+        android:scaleType="fitCenter"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
@@ -31,6 +32,7 @@
         android:layout_marginEnd="16dp"
         android:background="@null"
         android:src="@drawable/more_vert"
+        android:scaleType="fitCenter"
         android:contentDescription="Settings"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
