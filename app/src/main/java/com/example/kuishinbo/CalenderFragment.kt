@@ -32,6 +32,9 @@ class CalenderFragment : Fragment() {
         adapter = CalendarAdapter(calendarData)
         binding.calendarRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.calendarRecyclerView.adapter = adapter
+
+        // Add item decoration for spacing between items
+        binding.calendarRecyclerView.addItemDecoration(SpacesItemDecoration(8)) // 8dp spacing
     }
 
     // This method generates the calendar data
