@@ -9,17 +9,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.storage.FirebaseStorage
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.text.SimpleDateFormat
 import java.util.*
 
 class PreviewFragment : Fragment() {
@@ -59,86 +56,33 @@ class PreviewFragment : Fragment() {
         val retakeButton = view.findViewById<Button>(R.id.retake_button)
 
         val filePath = arguments?.getString(ARG_FILE_PATH)
-        var date: Date? = null
 
-//        if (filePath != null) {
-//            val imgFile = File(filePath)
-//            if (imgFile.exists()) {
-//                val bitmap = BitmapFactory.decodeFile(imgFile.absolutePath)
-//                imageView.setImageBitmap(bitmap)
-//
-//                val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-//                date = Date(imgFile.lastModified())
-//                dateTimeTextView.text = dateFormat.format(date)
-//            }
-//        }
+        if (filePath != null) {
+            val imgFile = File(filePath)
+            if (imgFile.exists()) {
+                val bitmap = BitmapFactory.decodeFile(imgFile.absolutePath)
+                imageView.setImageBitmap(bitmap)
+            }
+        }
 
-        // Cek apakah user sudah melakukan absensi hari ini
-//        checkTodayEntry(auth.currentUser?.email ?: "", entryTypeTextView, nextButton)
-//
-//        nextButton.setOnClickListener {
-//            if (filePath != null && date != null) {
-//                uploadImageAndSaveEntry(filePath, date) { entryType ->
-//                    entryTypeTextView.text = entryType
-//                }
-//            }
-//        }
+        nextButton.setOnClickListener {
+            if (filePath != null) {
+                uploadImage(filePath)
+            }
+        }
 
         retakeButton.setOnClickListener {
             parentFragmentManager.popBackStack()
         }
     }
 
-    private fun checkTodayEntry(email: String, entryTypeTextView: TextView, nextButton: Button) {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val todayDateString = dateFormat.format(Date())
-
-        db.collection("entries")
-            .whereEqualTo("email", email)
-            .whereEqualTo("date", todayDateString)
-            .get()
-            .addOnSuccessListener { documents ->
-                var entryType = "IN"
-                var canAddEntry = true
-
-                if (!documents.isEmpty) {
-                    val entries = documents.map { it.toObject(Entry::class.java) }
-                    val hasInEntry = entries.any { it.entryType == "IN" }
-                    val hasOutEntry = entries.any { it.entryType == "OUT" }
-
-                    entryType = when {
-                        hasInEntry && hasOutEntry -> {
-                            canAddEntry = false
-                            "You Have Already Completed Today's Checks"
-                        }
-                        hasInEntry -> "OUT"
-                        else -> "IN"
-                    }
-                }
-
-                entryTypeTextView.text = entryType
-                nextButton.isEnabled = canAddEntry
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(activity, "Error checking today's entries: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    private fun uploadImageAndSaveEntry(filePath: String, date: Date, callback: (String) -> Unit) {
-        // Check authentication first
+    private fun uploadImage(filePath: String) {
+        // Check authentication
         val currentUser = auth.currentUser
         if (currentUser == null || currentUser.email == null) {
             Toast.makeText(activity, "Please login first", Toast.LENGTH_SHORT).show()
             return
         }
-
-        val userEmail = currentUser.email!!
-
-        // Format dates
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
-        val dateString = dateFormat.format(date)
-        val timeString = timeFormat.format(date)
 
         // Show loading dialog
         val loadingDialog = AlertDialog.Builder(requireContext())
@@ -148,7 +92,7 @@ class PreviewFragment : Fragment() {
         loadingDialog.show()
 
         try {
-            // Convert file to bitmap first
+            // Convert file to bitmap
             val bitmap = BitmapFactory.decodeFile(filePath)
             if (bitmap == null) {
                 loadingDialog.dismiss()
@@ -156,93 +100,60 @@ class PreviewFragment : Fragment() {
                 return
             }
 
-            // Check existing entries
-            db.collection("entries")
-                .whereEqualTo("email", userEmail)
-                .whereEqualTo("date", dateString)
-                .get()
-                .addOnSuccessListener { documents ->
-                    // Determine entry type
-                    val entries = documents.map { it.toObject(Entry::class.java) }
-                    val hasInEntry = entries.any { it.entryType == "IN" }
-                    val hasOutEntry = entries.any { it.entryType == "OUT" }
+            // Convert bitmap to bytes
+            val baos = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
+            val imageData = baos.toByteArray()
 
-                    when {
-                        hasInEntry && hasOutEntry -> {
-                            loadingDialog.dismiss()
-                            Toast.makeText(activity, "Already completed today's entries", Toast.LENGTH_SHORT).show()
-                            return@addOnSuccessListener
-                        }
-                        hasInEntry -> "OUT"
-                        else -> "IN"
-                    }.let { entryType ->
-                        // Convert bitmap to bytes
-                        val baos = ByteArrayOutputStream()
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
-                        val imageData = baos.toByteArray()
+            // Create storage reference
+            val timestamp = System.currentTimeMillis()
+            val fileName = "IMG_${timestamp}.jpg"
+            val storageRef = storage.reference
+                .child("places")
+                .child(currentUser.email!!.replace(".", "_"))
+                .child(fileName)
 
-                        // Create storage reference with proper path
-                        val timestamp = System.currentTimeMillis()
-                        val fileName = "${dateString}_${timestamp}.jpg"
-                        val storageRef = FirebaseStorage.getInstance().reference
-                            .child("absensi")
-                            .child(userEmail.replace(".", "_")) // Replace dots in email with underscores
-                            .child(fileName)
+            // Upload image
+            val uploadTask = storageRef.putBytes(imageData)
+            uploadTask
+                .addOnProgressListener { taskSnapshot ->
+                    val progress = (100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount)
+                    loadingDialog.setMessage("Uploading: ${progress.toInt()}%")
+                }
+                .addOnSuccessListener {
+                    // Get download URL
+                    storageRef.downloadUrl.addOnSuccessListener { downloadUri ->
+                        // Save place data to Firestore
+                        val place = hashMapOf(
+                            "userId" to currentUser.email,
+                            "imageUrl" to downloadUri.toString(),
+                            "timestamp" to com.google.firebase.Timestamp.now()
+                        )
 
-                        // Upload image
-                        val uploadTask = storageRef.putBytes(imageData)
-                        uploadTask
-                            .addOnProgressListener { taskSnapshot ->
-                                val progress = (100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount)
-                                loadingDialog.setMessage("Uploading: ${progress.toInt()}%")
-                            }
+                        db.collection("places")
+                            .add(place)
                             .addOnSuccessListener {
-                                // Get download URL
-                                storageRef.downloadUrl.addOnSuccessListener { downloadUri ->
-                                    // Save entry to Firestore
-                                    val entry = hashMapOf(
-                                        "email" to userEmail,
-                                        "date" to dateString,
-                                        "time" to timeString,
-                                        "image" to downloadUri.toString(),
-                                        "entryType" to entryType,
-                                        "timestamp" to com.google.firebase.Timestamp.now()
-                                    )
-
-                                    db.collection("entries")
-                                        .add(entry)
-                                        .addOnSuccessListener {
-                                            loadingDialog.dismiss()
-                                            Toast.makeText(activity, "Attendance recorded successfully", Toast.LENGTH_SHORT).show()
-                                            callback(entryType)
-                                        }
-                                        .addOnFailureListener { e ->
-                                            loadingDialog.dismiss()
-                                            Toast.makeText(activity, "Failed to save entry: ${e.message}", Toast.LENGTH_SHORT).show()
-                                            Log.e("PreviewFragment", "Failed to save entry", e)
-                                        }
-                                }.addOnFailureListener { e ->
-                                    loadingDialog.dismiss()
-                                    Toast.makeText(activity, "Failed to get download URL: ${e.message}", Toast.LENGTH_SHORT).show()
-                                    Log.e("PreviewFragment", "Failed to get download URL", e)
-                                }
+                                loadingDialog.dismiss()
+                                Toast.makeText(activity, "Place added successfully", Toast.LENGTH_SHORT).show()
+                                // Navigate back to home or place list
+                                parentFragmentManager.popBackStack()
                             }
                             .addOnFailureListener { e ->
                                 loadingDialog.dismiss()
-                                Toast.makeText(activity, "Upload failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                                Log.e("PreviewFragment", "Upload failed", e)
+                                Toast.makeText(activity, "Failed to save place: ${e.message}", Toast.LENGTH_SHORT).show()
+                                Log.e("PreviewFragment", "Failed to save place", e)
                             }
                     }
                 }
                 .addOnFailureListener { e ->
                     loadingDialog.dismiss()
-                    Toast.makeText(activity, "Error checking entries: ${e.message}", Toast.LENGTH_SHORT).show()
-                    Log.e("PreviewFragment", "Error checking entries", e)
+                    Toast.makeText(activity, "Upload failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Log.e("PreviewFragment", "Upload failed", e)
                 }
         } catch (e: Exception) {
             loadingDialog.dismiss()
             Toast.makeText(activity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-            Log.e("PreviewFragment", "Error in uploadImageAndSaveEntry", e)
+            Log.e("PreviewFragment", "Error in uploadImage", e)
         }
     }
 }
