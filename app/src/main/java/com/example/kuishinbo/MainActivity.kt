@@ -75,5 +75,14 @@ class MainActivity : AppCompatActivity() {
         val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNavigationView.selectedItemId = R.id.nav_calender
     }
+    fun navigateToProfileFragment() {
+        val selectedFragment = ProfileFragment()
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, selectedFragment)
+            .addToBackStack(null)
+            .commit()
 
+        val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        bottomNavigationView.selectedItemId = R.id.nav_profile
+    }
 }

@@ -91,11 +91,10 @@ class CameraFragment : Fragment() {
         flashButton.visibility = if (hasFlash) View.VISIBLE else View.GONE
 
         backButton.setOnClickListener {
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, HomeFragment())
-                .addToBackStack(null)
-                .commit()
+            val mainActivity = requireActivity() as MainActivity
+            mainActivity.navigateToHomeFragment()
         }
+
 
         captureButton.setOnClickListener {
             takePhoto()
