@@ -67,9 +67,15 @@ class PreviewFragment : Fragment() {
 
         nextButton.setOnClickListener {
             if (filePath != null) {
-                uploadImage(filePath)
+                // Navigate to AddPlaceFragment
+                val addPlaceFragment = AddPlaceFragment()
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, addPlaceFragment)
+                    .addToBackStack(null)
+                    .commit()
             }
         }
+
 
         retakeButton.setOnClickListener {
             parentFragmentManager.popBackStack()

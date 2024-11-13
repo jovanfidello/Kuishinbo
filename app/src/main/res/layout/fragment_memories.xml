@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorBg"
+    android:padding="16dp"
+    tools:context=".MemoriesFragment">
+
+    <!-- Back Button -->
+    <ImageButton
+        android:id="@+id/back_button"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="16dp"
+        android:src="@drawable/back"
+        android:background="@null"
+        android:contentDescription="Back"
+        android:scaleType="fitCenter"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- Settings Button (Three dots menu) -->
+    <ImageButton
+        android:id="@+id/settings_button"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:background="@null"
+        android:src="@drawable/more_vert"
+        android:scaleType="fitCenter"
+        android:contentDescription="Settings"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Photo Viewer -->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/photo_viewer"
+        android:layout_width="0dp"
+        android:layout_height="400dp"
+        android:layout_marginTop="32dp"
+        app:layout_constraintTop_toBottomOf="@id/back_button"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Photo Details -->
+    <TextView
+        android:id="@+id/photo_details"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="January 25, 2024\n9:41"
+        android:textColor="@color/colorAccent"
+        android:textAlignment="center"
+        app:layout_constraintTop_toBottomOf="@id/photo_viewer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/card"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="4dp"
+        app:layout_constraintTop_toBottomOf="@id/photo_details"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp">
+
+            <!-- Place Name -->
+            <TextView
+                android:id="@+id/place_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Bebek Rinjani"
+                android:textSize="18sp"
+                android:textColor="@color/colorAccent"
+                android:textStyle="bold"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/place_rating" />
+
+            <!-- Place Rating -->
+            <RatingBar
+                android:id="@+id/place_rating"
+                style="?android:attr/ratingBarStyleSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:rating="4.5"
+                android:numStars="5"
+                android:stepSize="0.5"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <!-- Description -->
+            <EditText
+                android:id="@+id/place_description"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:hint="Enter description"
+                android:textColor="@color/colorAccent"
+                android:textColorHint="@color/light_green"
+                android:backgroundTint="@color/light_green"
+                app:layout_constraintTop_toBottomOf="@id/place_name"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <!-- Share Options -->
+            <LinearLayout
+                android:id="@+id/share_options"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="16dp"
+                app:layout_constraintTop_toBottomOf="@id/place_description"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <ImageButton
+                    android:id="@+id/instagram_button"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_instagram"
+                    android:background="@null"
+                    android:scaleType="fitCenter"
+                    android:contentDescription="Instagram" />
+
+                <ImageButton
+                    android:id="@+id/whatsapp_button"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_whatsapp"
+                    android:background="@null"
+                    android:scaleType="fitCenter"
+                    android:contentDescription="WhatsApp" />
+
+                <ImageButton
+                    android:id="@+id/others_button"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_other"
+                    android:background="@null"
+                    android:scaleType="fitCenter"
+                    android:contentDescription="Others" />
+
+                <ImageButton
+                    android:id="@+id/download_button"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_download"
+                    android:background="@null"
+                    android:scaleType="fitCenter"
+                    android:contentDescription="Download" />
+
+            </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.cardview.widget.CardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

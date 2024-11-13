@@ -62,7 +62,7 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
 
         // Setup see memories click
         seeMemoriesLink.setOnClickListener {
-            (activity as? MainActivity)?.navigateToCalenderFragment()
+            (activity as? MainActivity)?.navigateToMemoriesFragment()
         }
     }
 

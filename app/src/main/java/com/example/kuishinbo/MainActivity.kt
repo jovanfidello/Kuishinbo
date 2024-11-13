@@ -34,7 +34,14 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_profile -> selectedFragment = ProfileFragment()
             }
             if (selectedFragment != null) {
-                supportFragmentManager.beginTransaction().replace(R.id.fragment_container, selectedFragment).commit()
+                // Menambahkan animasi transisi
+                supportFragmentManager.beginTransaction()
+                    .setCustomAnimations(
+                        R.anim.fade_in, // animasi masuk
+                        R.anim.fade_out // animasi keluar
+                    )
+                    .replace(R.id.fragment_container, selectedFragment)
+                    .commit()
             }
             true
         }
@@ -46,6 +53,9 @@ class MainActivity : AppCompatActivity() {
     fun navigateToHomeFragment() {
         val selectedFragment = HomeFragment()
         supportFragmentManager.beginTransaction()
+            .setCustomAnimations(
+                R.anim.fade_in, R.anim.fade_out
+            )
             .replace(R.id.fragment_container, selectedFragment)
             .addToBackStack(null)
             .commit()
@@ -57,6 +67,9 @@ class MainActivity : AppCompatActivity() {
     fun navigateToSettingFragment() {
         val selectedFragment = SettingFragment()
         supportFragmentManager.beginTransaction()
+            .setCustomAnimations(
+                R.anim.fade_in, R.anim.fade_out
+            )
             .replace(R.id.fragment_container, selectedFragment)
             .addToBackStack(null)
             .commit()
@@ -68,6 +81,9 @@ class MainActivity : AppCompatActivity() {
     fun navigateToCalenderFragment() {
         val selectedFragment = CalenderFragment()
         supportFragmentManager.beginTransaction()
+            .setCustomAnimations(
+                R.anim.fade_in, R.anim.fade_out
+            )
             .replace(R.id.fragment_container, selectedFragment)
             .addToBackStack(null)
             .commit()
@@ -75,14 +91,29 @@ class MainActivity : AppCompatActivity() {
         val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNavigationView.selectedItemId = R.id.nav_calender
     }
+
     fun navigateToProfileFragment() {
         val selectedFragment = ProfileFragment()
         supportFragmentManager.beginTransaction()
+            .setCustomAnimations(
+                R.anim.fade_in, R.anim.fade_out
+            )
             .replace(R.id.fragment_container, selectedFragment)
             .addToBackStack(null)
             .commit()
 
         val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNavigationView.selectedItemId = R.id.nav_profile
+    }
+
+    fun navigateToMemoriesFragment() {
+        val selectedFragment = MemoriesFragment()
+        supportFragmentManager.beginTransaction()
+            .setCustomAnimations(
+                R.anim.fade_in, R.anim.fade_out
+            )
+            .replace(R.id.fragment_container, selectedFragment)
+            .addToBackStack(null)
+            .commit()
     }
 }

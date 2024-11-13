@@ -7,5 +7,11 @@ data class MonthModel(
 
 data class DayModel(
     val dayNumber: Int,
-    val imageRes: Int? = null // Optional image for the day
+    val dayOfWeek: DayOfWeek,
+    val imageRes: Int?,
+    val isSelected: Boolean = false
 )
+
+enum class DayOfWeek {
+    MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
+}
