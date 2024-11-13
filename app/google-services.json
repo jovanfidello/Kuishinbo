@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1048843165722",
+    "project_id": "kuishinbo-61851",
+    "storage_bucket": "kuishinbo-61851.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1048843165722:android:eed3bed8e21a1479e131a3",
+        "android_client_info": {
+          "package_name": "com.example.kuishinbo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKNKhaWCza3vyUmraYj3xJkERzMrkoeTU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
