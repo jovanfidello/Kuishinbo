@@ -1,5 +1,6 @@
 package com.example.kuishinbo
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
@@ -67,15 +68,14 @@ class PreviewFragment : Fragment() {
 
         nextButton.setOnClickListener {
             if (filePath != null) {
-                // Navigate to AddPlaceFragment
-                val addPlaceFragment = AddPlaceFragment()
+                // Navigate to AddPlaceDetailFragment
+                val addPlaceFragment = AddPlaceDetailFragment()
                 parentFragmentManager.beginTransaction()
                     .replace(R.id.fragment_container, addPlaceFragment)
                     .addToBackStack(null)
                     .commit()
             }
         }
-
 
         retakeButton.setOnClickListener {
             parentFragmentManager.popBackStack()

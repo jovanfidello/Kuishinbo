@@ -45,8 +45,6 @@ class MainActivity : AppCompatActivity() {
             }
             true
         }
-
-        // Set default selection
         bottomNavigationView.selectedItemId = R.id.nav_home
     }
 

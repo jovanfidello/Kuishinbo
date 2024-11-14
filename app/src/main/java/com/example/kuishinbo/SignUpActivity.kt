@@ -3,25 +3,26 @@ package com.example.kuishinbo
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageView
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import android.util.Patterns
 
 class SignUpActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
+    private lateinit var db: FirebaseFirestore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_sign_up)
 
         auth = FirebaseAuth.getInstance()
+        db = FirebaseFirestore.getInstance()
 
+        val nameField = findViewById<EditText>(R.id.name)
+        val countryField = findViewById<AutoCompleteTextView>(R.id.country)
         val emailField = findViewById<EditText>(R.id.email)
         val passwordField = findViewById<EditText>(R.id.password)
         val reconfirmPasswordField = findViewById<EditText>(R.id.reconfirm_password)
@@ -30,16 +31,38 @@ class SignUpActivity : AppCompatActivity() {
         val reconfirmPasswordToggle = findViewById<ImageView>(R.id.reconfirm_password_toggle)
         val signInRedirect = findViewById<TextView>(R.id.signin_redirect_text)
 
+        // Populate the location AutoCompleteTextView with Indonesian cities
+        val cities = resources.getStringArray(R.array.countries)
+        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, cities)
+        countryField.setAdapter(adapter)
+
+        // Limit the dropdown to show only 5 items initially, rest scrollable
+        countryField.dropDownHeight = 250 // Adjust as needed (in pixels)
+
+        // Redirect to Login activity if the user already has an account
         signInRedirect.setOnClickListener {
             startActivity(Intent(this, LoginActivity::class.java))
         }
 
+        // Sign up button functionality
         signupButton.setOnClickListener {
             val email = emailField.text.toString()
             val password = passwordField.text.toString()
             val reconfirmPassword = reconfirmPasswordField.text.toString()
+            val name = nameField.text.toString()
+            val country = countryField.text.toString()
 
             // Validate inputs
+            if (name.isEmpty()) {
+                Toast.makeText(this, "Name cannot be empty.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (country.isEmpty()) {
+                Toast.makeText(this, "Location cannot be empty.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
             if (email.isEmpty()) {
                 Toast.makeText(this, "Email cannot be empty.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
@@ -65,9 +88,27 @@ class SignUpActivity : AppCompatActivity() {
                     auth.createUserWithEmailAndPassword(email, password)
                         .addOnCompleteListener(this) { task ->
                             if (task.isSuccessful) {
-                                Toast.makeText(this, "Signup successful", Toast.LENGTH_SHORT).show()
-                                startActivity(Intent(this, LoginActivity::class.java))
-                                finish()
+                                val user = auth.currentUser
+
+                                // Create user data map to save to Firestore
+                                val userData = hashMapOf(
+                                    "name" to name,
+                                    "country" to country,
+                                    "timestamp" to com.google.firebase.firestore.FieldValue.serverTimestamp()  // Add timestamp
+                                )
+
+                                // Save user data to Firestore in the 'users' collection, with a document named by user UID
+                                val db = FirebaseFirestore.getInstance()
+                                db.collection("users").document(user!!.uid)
+                                    .set(userData)
+                                    .addOnSuccessListener {
+                                        Toast.makeText(this, "Signup successful", Toast.LENGTH_SHORT).show()
+                                        startActivity(Intent(this, LoginActivity::class.java))
+                                        finish()
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                                    }
                             } else {
                                 Toast.makeText(this, "Signup failed: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
                             }
@@ -80,19 +121,19 @@ class SignUpActivity : AppCompatActivity() {
             }
         }
 
-        // Toggle password visibility
+
+        // Toggle password visibility for password and reconfirm password
         passwordToggle.setOnClickListener {
-            if (passwordField.inputType == 129) { // 129 is the inputType for "textPassword"
-                passwordField.inputType = 1 // 1 is for "text"
-                passwordToggle.setImageResource(R.drawable.ic_visible_password) // Change icon to visible
+            if (passwordField.inputType == 129) {
+                passwordField.inputType = 1
+                passwordToggle.setImageResource(R.drawable.ic_visible_password)
             } else {
                 passwordField.inputType = 129
-                passwordToggle.setImageResource(R.drawable.ic_invisible_password) // Change icon to invisible
+                passwordToggle.setImageResource(R.drawable.ic_invisible_password)
             }
-            passwordField.setSelection(passwordField.text.length) // Move cursor to the end
+            passwordField.setSelection(passwordField.text.length)
         }
 
-        // Toggle reconfirm password visibility
         reconfirmPasswordToggle.setOnClickListener {
             if (reconfirmPasswordField.inputType == 129) {
                 reconfirmPasswordField.inputType = 1

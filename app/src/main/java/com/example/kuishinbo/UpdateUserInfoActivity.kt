@@ -1,10 +1,10 @@
 package com.example.kuishinbo
 
 import android.content.Intent
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
@@ -25,7 +25,7 @@ class UpdateUserInfoActivity : AppCompatActivity() {
     private lateinit var selectedImageUri: Uri
 
     private lateinit var nameEditText: EditText
-    private lateinit var cityEditText: EditText
+    private lateinit var countryAutoCompleteTextView: AutoCompleteTextView
     private lateinit var profilePhotoView: ImageView
 
     private val PICK_IMAGE_REQUEST = 1
@@ -40,10 +40,15 @@ class UpdateUserInfoActivity : AppCompatActivity() {
         storageRef = storage.reference
 
         nameEditText = findViewById(R.id.name_edit_text)
-        cityEditText = findViewById(R.id.city_edit_text)
+        countryAutoCompleteTextView = findViewById(R.id.country_edit_text)
         profilePhotoView = findViewById(R.id.profile_photo_view)
         val saveButton = findViewById<Button>(R.id.save_button)
         val changePhotoButton = findViewById<Button>(R.id.change_photo_button)
+
+        // Set up AutoCompleteTextView for country
+        val countries = resources.getStringArray(R.array.countries) // Load country list from string resources
+        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, countries)
+        countryAutoCompleteTextView.setAdapter(adapter)
 
         val user = auth.currentUser
         if (user != null) {
@@ -51,13 +56,12 @@ class UpdateUserInfoActivity : AppCompatActivity() {
                 .addOnSuccessListener { document ->
                     if (document != null && document.exists()) {
                         val name = document.getString("name")
-                        val city = document.getString("city")
-                        val photoProfileUrl = document.getString("photoProfileUrl") // Updated variable name
+                        val country = document.getString("country")
+                        val photoProfileUrl = document.getString("photoProfileUrl")
 
                         nameEditText.setText(name)
-                        cityEditText.setText(city)
+                        countryAutoCompleteTextView.setText(country) // Set existing country data
                         photoProfileUrl?.let {
-                            // Use Glide to load the image
                             Glide.with(this).load(it).into(profilePhotoView)
                         }
                     }
@@ -73,12 +77,12 @@ class UpdateUserInfoActivity : AppCompatActivity() {
 
         saveButton.setOnClickListener {
             val name = nameEditText.text.toString()
-            val city = cityEditText.text.toString()
-            if (name.isNotEmpty() && city.isNotEmpty()) {
+            val country = countryAutoCompleteTextView.text.toString()
+            if (name.isNotEmpty() && country.isNotEmpty()) {
                 if (::selectedImageUri.isInitialized) {
-                    uploadImageToFirebase(name, city)
+                    uploadImageToFirebase(name, country)
                 } else {
-                    saveUserInfo(name, city, null)
+                    saveUserInfo(name, country, null)
                 }
             } else {
                 Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
@@ -97,19 +101,20 @@ class UpdateUserInfoActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.data != null) {
             selectedImageUri = data.data!!
-            // Load the image into the ImageView (profilePhotoView)
-            Glide.with(this).load(selectedImageUri).into(profilePhotoView) // Use Glide to load the selected image
+            Glide.with(this).load(selectedImageUri).into(profilePhotoView)
+        } else {
+            Toast.makeText(this, "No image selected", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun uploadImageToFirebase(name: String, city: String) {
+    private fun uploadImageToFirebase(name: String, country: String) {
         val userId = auth.currentUser?.uid
         val fileRef = storageRef.child("profile_photos/$userId.jpg")
 
         fileRef.putFile(selectedImageUri)
             .addOnSuccessListener {
                 fileRef.downloadUrl.addOnSuccessListener { uri ->
-                    saveUserInfo(name, city, uri.toString())
+                    saveUserInfo(name, country, uri.toString())
                 }
             }
             .addOnFailureListener { e ->
@@ -117,10 +122,10 @@ class UpdateUserInfoActivity : AppCompatActivity() {
             }
     }
 
-    private fun saveUserInfo(name: String, city: String, photoProfileUrl: String?) { // Updated parameter name
+    private fun saveUserInfo(name: String, country: String, photoProfileUrl: String?) {
         val userData = hashMapOf(
             "name" to name,
-            "city" to city
+            "country" to country
         )
         photoProfileUrl?.let { userData["photoProfileUrl"] = it }
 
