@@ -54,6 +54,7 @@ class SettingFragment : Fragment() {
                         val country = document.getString("country")
                         val photoProfileUrl = document.getString("photoProfileUrl")
 
+
                         // Display the profile photo or default if null
                         if (!photoProfileUrl.isNullOrEmpty()) {
                             Glide.with(this)

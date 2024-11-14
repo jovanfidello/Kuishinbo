@@ -330,6 +330,9 @@ class CameraFragment : Fragment() {
                         // Navigate to preview
                         val previewFragment = PreviewFragment.newInstance(photoFile.absolutePath)
                         parentFragmentManager.beginTransaction()
+                            .setCustomAnimations(
+                                R.anim.fade_in, R.anim.fade_out
+                            )
                             .replace(R.id.fragment_container, previewFragment)
                             .addToBackStack(null)
                             .commit()

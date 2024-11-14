@@ -114,4 +114,15 @@ class MainActivity : AppCompatActivity() {
             .addToBackStack(null)
             .commit()
     }
+
+    fun navigateToAddPlaceFragment() {
+        val selectedFragment = AddPlaceFragment()
+        supportFragmentManager.beginTransaction()
+            .setCustomAnimations(
+                R.anim.fade_in, R.anim.fade_out
+            )
+            .replace(R.id.fragment_container, selectedFragment)
+            .addToBackStack(null)
+            .commit()
+    }
 }

@@ -13,6 +13,7 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
@@ -71,6 +72,9 @@ class PreviewFragment : Fragment() {
                 // Navigate to AddPlaceDetailFragment
                 val addPlaceFragment = AddPlaceDetailFragment()
                 parentFragmentManager.beginTransaction()
+                    .setCustomAnimations(
+                        R.anim.fade_in, R.anim.fade_out
+                    )
                     .replace(R.id.fragment_container, addPlaceFragment)
                     .addToBackStack(null)
                     .commit()
@@ -161,5 +165,16 @@ class PreviewFragment : Fragment() {
             Toast.makeText(activity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             Log.e("PreviewFragment", "Error in uploadImage", e)
         }
+    }
+    override fun onResume() {
+        super.onResume()
+        val bottomNavigationView = activity?.findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        bottomNavigationView?.visibility = View.GONE
+    }
+
+    override fun onPause() {
+        super.onPause()
+        val bottomNavigationView = activity?.findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        bottomNavigationView?.visibility = View.VISIBLE
     }
 }

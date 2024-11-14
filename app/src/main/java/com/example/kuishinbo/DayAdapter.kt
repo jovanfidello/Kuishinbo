@@ -1,3 +1,4 @@
+// DayAdapter.kt
 package com.example.kuishinbo
 
 import android.view.LayoutInflater

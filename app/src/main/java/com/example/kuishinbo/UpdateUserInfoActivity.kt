@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
 
@@ -58,7 +59,7 @@ class UpdateUserInfoActivity : AppCompatActivity() {
                         val name = document.getString("name")
                         val country = document.getString("country")
                         val photoProfileUrl = document.getString("photoProfileUrl")
-
+                        val timestamp = document.getTimestamp("timestamp")?.toDate()
                         nameEditText.setText(name)
                         countryAutoCompleteTextView.setText(country) // Set existing country data
                         photoProfileUrl?.let {
@@ -130,7 +131,7 @@ class UpdateUserInfoActivity : AppCompatActivity() {
         photoProfileUrl?.let { userData["photoProfileUrl"] = it }
 
         auth.currentUser?.let { user ->
-            db.collection("users").document(user.uid).set(userData)
+            db.collection("users").document(user.uid).set(userData, SetOptions.merge())
                 .addOnSuccessListener {
                     Toast.makeText(this, "Information updated", Toast.LENGTH_SHORT).show()
                     finish()
@@ -140,4 +141,5 @@ class UpdateUserInfoActivity : AppCompatActivity() {
                 }
         }
     }
+
 }
