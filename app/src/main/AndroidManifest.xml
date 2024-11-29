@@ -22,10 +22,10 @@
         android:theme="@style/Theme.Kuishinbo"
         tools:targetApi="31">
         <activity
-            android:name=".LoadingScreenActivity"
-            android:exported="false" />
+            android:name=".SuccessAddActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity
-            android:name=".EntryUserInfoActivity"
+            android:name=".LoadingScreenActivity"
             android:exported="false" />
         <activity
             android:name=".UpdateUserInfoActivity"

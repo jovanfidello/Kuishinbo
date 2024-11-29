@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -24,9 +25,21 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import java.io.ByteArrayOutputStream
+import java.io.File
 
 class AddPlaceDetailFragment : Fragment() {
 
+    companion object {
+        private const val ARG_FILE_PATH = "file_path"
+
+        fun newInstance(filePath: String): AddPlaceDetailFragment {
+            val fragment = AddPlaceDetailFragment()
+            val args = Bundle()
+            args.putString(ARG_FILE_PATH, filePath)
+            fragment.arguments = args
+            return fragment
+        }
+    }
     private lateinit var nameEditText: TextInputEditText
     private lateinit var descriptionEditText: TextInputEditText
     private lateinit var ratingBar: RatingBar
@@ -34,6 +47,7 @@ class AddPlaceDetailFragment : Fragment() {
     private lateinit var locationButton: Button
     private lateinit var addToMemoriesButton: Button
     private lateinit var locationImageView: ImageView
+    private lateinit var filePath: String
 
     private var selectedLocation: LatLng? = null
     private val auth = FirebaseAuth.getInstance()
@@ -45,46 +59,59 @@ class AddPlaceDetailFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        // Ambil filePath dari arguments
+        filePath = arguments?.getString(ARG_FILE_PATH) ?: ""
         return inflater.inflate(R.layout.fragment_add_place_detail, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Initialize all views
+        nameEditText = view.findViewById(R.id.nameEditText)
+        descriptionEditText = view.findViewById(R.id.descriptionEditText)
+        ratingBar = view.findViewById(R.id.ratingBar)
         locationInfoTextView = view.findViewById(R.id.locationInfoTextView)
         locationButton = view.findViewById(R.id.locationButton)
         locationImageView = view.findViewById(R.id.locationImageView)
-
+        addToMemoriesButton = view.findViewById(R.id.addToMemoriesButton)
+        val filePath = arguments?.getString(ARG_FILE_PATH)
         locationImageView.visibility = View.GONE
+        if (filePath != null) {
+            locationButton.setOnClickListener {
+                // Navigate to AddPlaceFragment to set the location
+                (activity as? MainActivity)?.navigateToAddPlaceFragment()
+            }
 
-        locationButton.setOnClickListener {
-            // Navigate to AddPlaceFragment to set the location
-            (activity as? MainActivity)?.navigateToAddPlaceFragment()
-        }
+            // Listen for both the location and snapshot data
+            parentFragmentManager.setFragmentResultListener(
+                "location_result",
+                viewLifecycleOwner
+            ) { _, bundle ->
+                selectedLocation = bundle.getParcelable("location") as? LatLng
+                mapSnapshot = bundle.getParcelable("snapshot")
 
-        // Listen for both the location and snapshot data
-        parentFragmentManager.setFragmentResultListener("location_result", viewLifecycleOwner) { _, bundle ->
-            selectedLocation = bundle.getParcelable("location") as? LatLng
-            mapSnapshot = bundle.getParcelable("snapshot")
+                // Update location information
+                locationInfoTextView.text =
+                    "Location set: ${selectedLocation?.latitude}, ${selectedLocation?.longitude}"
+                locationButton.text = "Change Location"
 
-            // Update location information
-            locationInfoTextView.text = "Location set: ${selectedLocation?.latitude}, ${selectedLocation?.longitude}"
-            locationButton.text = "Change Location"
+                // Show snapshot if available
+                if (mapSnapshot != null) {
+                    loadMapSnapshot()
+                    locationImageView.visibility = View.VISIBLE
+                } else {
+                    Log.e("AddPlaceDetailFragment", "Snapshot is null")
+                }
+            }
 
-            // Show snapshot if available
-            if (mapSnapshot != null) {
-                loadMapSnapshot()
-                locationImageView.visibility = View.VISIBLE
-            } else {
-                Log.e("AddPlaceDetailFragment", "Snapshot is null")
+            addToMemoriesButton.setOnClickListener {
+                if (validateInputs() && mapSnapshot != null) {
+                    uploadPhotoToStorageAndSaveData()
+                }
             }
         }
-
-        addToMemoriesButton.setOnClickListener {
-
-        }
     }
-
 
     // This function will load the map snapshot into the ImageView
     private fun loadMapSnapshot() {
@@ -93,80 +120,71 @@ class AddPlaceDetailFragment : Fragment() {
         }
     }
 
-    private fun uploadImage(filePath: String) {
+    private fun uploadPhotoToStorageAndSaveData() {
         val currentUser = auth.currentUser
         if (currentUser == null) {
             Toast.makeText(activity, "Please login first", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val loadingDialog = AlertDialog.Builder(requireContext())
-            .setMessage("Uploading image...")
-            .setCancelable(false)
-            .create()
-        loadingDialog.show()
-
         try {
-            val bitmap = BitmapFactory.decodeFile(filePath)
-            if (bitmap == null) {
-                loadingDialog.dismiss()
-                Toast.makeText(activity, "Failed to load image", Toast.LENGTH_SHORT).show()
+            // Pastikan filePath berisi foto dari kamera
+            val file = File(filePath)
+            if (!file.exists()) {
+                Toast.makeText(activity, "File not found", Toast.LENGTH_SHORT).show()
                 return
             }
 
-            val baos = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
-            val imageData = baos.toByteArray()
+            val photoUri = Uri.fromFile(file)
+            val storageRef = storage.reference.child("places/${currentUser.uid}/${file.name}")
 
-            val timestamp = System.currentTimeMillis()
-            val fileName = "IMG_${timestamp}.jpg"
-            val storageRef = storage.reference.child("places/${currentUser.uid}/$fileName")
-
-            val uploadTask = storageRef.putBytes(imageData)
+            val uploadTask = storageRef.putFile(photoUri)
             uploadTask
                 .addOnSuccessListener {
                     storageRef.downloadUrl.addOnSuccessListener { downloadUri ->
-                        savePlaceData(downloadUri.toString())
-                        loadingDialog.dismiss()
+                        saveToFirestore(downloadUri.toString())
                     }
                 }
                 .addOnFailureListener { e ->
-                    loadingDialog.dismiss()
-                    Toast.makeText(activity, "Upload failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                    Log.e("AddPlaceDetailFragment", "Upload failed", e)
+                    Toast.makeText(activity, "Photo upload failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Log.e("AddPlaceDetailFragment", "Photo upload failed", e)
                 }
         } catch (e: Exception) {
-            loadingDialog.dismiss()
             Toast.makeText(activity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-            Log.e("AddPlaceDetailFragment", "Error in uploadImage", e)
+            Log.e("AddPlaceDetailFragment", "Error in uploadPhotoToStorageAndSaveData", e)
         }
     }
 
-    private fun savePlaceData(imageUrl: String) {
+    private fun saveToFirestore(imageUrl: String) {
         val currentUser = auth.currentUser
-        if (currentUser == null) return
+        if (currentUser == null) {
+            Toast.makeText(activity, "Please login first", Toast.LENGTH_SHORT).show()
+            return
+        }
 
-        val place = hashMapOf(
+        val placeData = hashMapOf(
             "userId" to currentUser.uid,
             "name" to nameEditText.text.toString(),
             "description" to descriptionEditText.text.toString(),
             "rating" to ratingBar.rating,
-            "location" to selectedLocation?.let { mapOf("latitude" to it.latitude, "longitude" to it.longitude) },
             "imageUrl" to imageUrl,
-            "timestamp" to com.google.firebase.Timestamp.now()
+            "timestamp" to System.currentTimeMillis()
         )
 
-        db.collection("places")
-            .add(place)
+        db.collection("memories")
+            .add(placeData)
             .addOnSuccessListener {
-                Toast.makeText(activity, "Place added successfully", Toast.LENGTH_SHORT).show()
-                parentFragmentManager.popBackStack() // Navigate back
+                val intent = Intent(activity, SuccessAddActivity::class.java)
+                startActivity(intent)
+                requireActivity().finish()
             }
             .addOnFailureListener { e ->
-                Toast.makeText(activity, "Failed to save place: ${e.message}", Toast.LENGTH_SHORT).show()
-                Log.e("AddPlaceDetailFragment", "Failed to save place", e)
+                Toast.makeText(activity, "Failed to save data: ${e.message}", Toast.LENGTH_SHORT).show()
+                Log.e("AddPlaceDetailFragment", "Failed to save data", e)
             }
     }
+
+
 
     private fun validateInputs(): Boolean {
         val name = nameEditText.text.toString()

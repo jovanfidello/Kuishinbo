@@ -69,103 +69,22 @@ class PreviewFragment : Fragment() {
 
         nextButton.setOnClickListener {
             if (filePath != null) {
-                // Navigate to AddPlaceDetailFragment
-                val addPlaceFragment = AddPlaceDetailFragment()
+                // Jika filePath valid, kirimkan file ke AddPlaceDetailFragment
+                val addPlaceFragment = AddPlaceDetailFragment.newInstance(filePath)
                 parentFragmentManager.beginTransaction()
-                    .setCustomAnimations(
-                        R.anim.fade_in, R.anim.fade_out
-                    )
+                    .setCustomAnimations(R.anim.fade_in, R.anim.fade_out)
                     .replace(R.id.fragment_container, addPlaceFragment)
                     .addToBackStack(null)
                     .commit()
             }
         }
 
+
         retakeButton.setOnClickListener {
             parentFragmentManager.popBackStack()
         }
     }
 
-    private fun uploadImage(filePath: String) {
-        // Check authentication
-        val currentUser = auth.currentUser
-        if (currentUser == null || currentUser.email == null) {
-            Toast.makeText(activity, "Please login first", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        // Show loading dialog
-        val loadingDialog = AlertDialog.Builder(requireContext())
-            .setMessage("Uploading image...")
-            .setCancelable(false)
-            .create()
-        loadingDialog.show()
-
-        try {
-            // Convert file to bitmap
-            val bitmap = BitmapFactory.decodeFile(filePath)
-            if (bitmap == null) {
-                loadingDialog.dismiss()
-                Toast.makeText(activity, "Failed to load image", Toast.LENGTH_SHORT).show()
-                return
-            }
-
-            // Convert bitmap to bytes
-            val baos = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
-            val imageData = baos.toByteArray()
-
-            // Create storage reference
-            val timestamp = System.currentTimeMillis()
-            val fileName = "IMG_${timestamp}.jpg"
-            val storageRef = storage.reference
-                .child("places")
-                .child(currentUser.email!!.replace(".", "_"))
-                .child(fileName)
-
-            // Upload image
-            val uploadTask = storageRef.putBytes(imageData)
-            uploadTask
-                .addOnProgressListener { taskSnapshot ->
-                    val progress = (100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount)
-                    loadingDialog.setMessage("Uploading: ${progress.toInt()}%")
-                }
-                .addOnSuccessListener {
-                    // Get download URL
-                    storageRef.downloadUrl.addOnSuccessListener { downloadUri ->
-                        // Save place data to Firestore
-                        val place = hashMapOf(
-                            "userId" to currentUser.email,
-                            "imageUrl" to downloadUri.toString(),
-                            "timestamp" to com.google.firebase.Timestamp.now()
-                        )
-
-                        db.collection("places")
-                            .add(place)
-                            .addOnSuccessListener {
-                                loadingDialog.dismiss()
-                                Toast.makeText(activity, "Place added successfully", Toast.LENGTH_SHORT).show()
-                                // Navigate back to home or place list
-                                parentFragmentManager.popBackStack()
-                            }
-                            .addOnFailureListener { e ->
-                                loadingDialog.dismiss()
-                                Toast.makeText(activity, "Failed to save place: ${e.message}", Toast.LENGTH_SHORT).show()
-                                Log.e("PreviewFragment", "Failed to save place", e)
-                            }
-                    }
-                }
-                .addOnFailureListener { e ->
-                    loadingDialog.dismiss()
-                    Toast.makeText(activity, "Upload failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                    Log.e("PreviewFragment", "Upload failed", e)
-                }
-        } catch (e: Exception) {
-            loadingDialog.dismiss()
-            Toast.makeText(activity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-            Log.e("PreviewFragment", "Error in uploadImage", e)
-        }
-    }
     override fun onResume() {
         super.onResume()
         val bottomNavigationView = activity?.findViewById<BottomNavigationView>(R.id.bottom_navigation)

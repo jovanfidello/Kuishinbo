@@ -132,7 +132,7 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
         }
 
         // Add sample markers
-        addSampleMarkers()
+        fetchUserPlacesMarkers()
 
         // Hide info window when clicking on map
         googleMap?.setOnMapClickListener {
@@ -168,6 +168,8 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
             }
         }
     }
+
+
 
     private fun addSampleMarkers() {
         val locations = listOf(
@@ -207,6 +209,40 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
+    private fun fetchUserPlacesMarkers() {
+        val user = auth.currentUser
+        if (user != null) {
+            db.collection("places")
+                .whereEqualTo("userId", user.uid)
+                .get()
+                .addOnSuccessListener { querySnapshot ->
+                    for (document in querySnapshot.documents) {
+                        val locationMap = document.get("location") as? Map<String, Double>
+                        val name = document.getString("name")
+
+                        locationMap?.let { location ->
+                            val latLng = LatLng(
+                                location["latitude"] ?: 0.0,
+                                location["longitude"] ?: 0.0
+                            )
+
+                            googleMap?.addMarker(
+                                MarkerOptions()
+                                    .position(latLng)
+                                    .title(name ?: "Unnamed Place")
+                            )
+                        }
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Toast.makeText(
+                        context,
+                        "Failed to fetch places: ${e.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+        }
+    }
     override fun onDestroyView() {
         super.onDestroyView()
         googleMap = null
