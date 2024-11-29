@@ -21,6 +21,7 @@ import com.bumptech.glide.Glide
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.textfield.TextInputEditText
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
@@ -166,11 +167,8 @@ class AddPlaceDetailFragment : Fragment() {
             return
         }
 
-        // Format timestamp to the desired format
-        val timestamp = System.currentTimeMillis()
-        val dateFormat = SimpleDateFormat("MMMM dd, yyyy 'at' hh:mm:ss a 'UTC'Z", Locale.getDefault())
-        dateFormat.timeZone = TimeZone.getTimeZone("GMT+7") // Set the timezone to UTC+7 (Jakarta time)
-        val formattedDate = dateFormat.format(Date(timestamp))
+        // Use the current time as a Firestore Timestamp
+        val timestamp = Timestamp(System.currentTimeMillis() / 1000, 0) // Firestore Timestamp uses seconds, not milliseconds
 
         val placeData = hashMapOf(
             "userId" to currentUser.uid,
@@ -184,7 +182,7 @@ class AddPlaceDetailFragment : Fragment() {
                 )
             },
             "imageUrl" to imageUrl,
-            "timestamp" to formattedDate // Use the formatted date instead of the raw timestamp
+            "timestamp" to timestamp // Store Firestore Timestamp instead of formatted string
         )
 
         db.collection("memories")
@@ -199,6 +197,7 @@ class AddPlaceDetailFragment : Fragment() {
                 Log.e("AddPlaceDetailFragment", "Failed to save data", e)
             }
     }
+
 
 
 

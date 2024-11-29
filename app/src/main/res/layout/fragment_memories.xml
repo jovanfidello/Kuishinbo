@@ -129,24 +129,6 @@
                 app:layout_constraintEnd_toEndOf="parent">
 
                 <ImageButton
-                    android:id="@+id/instagram_button"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:src="@drawable/ic_instagram"
-                    android:background="@null"
-                    android:scaleType="fitCenter"
-                    android:contentDescription="Instagram" />
-
-                <ImageButton
-                    android:id="@+id/whatsapp_button"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:src="@drawable/ic_whatsapp"
-                    android:background="@null"
-                    android:scaleType="fitCenter"
-                    android:contentDescription="WhatsApp" />
-
-                <ImageButton
                     android:id="@+id/others_button"
                     android:layout_width="48dp"
                     android:layout_height="48dp"

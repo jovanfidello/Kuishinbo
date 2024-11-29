@@ -84,6 +84,10 @@ class CalenderFragment : Fragment() {
         endYear: Int
     ) {
         val calendar = Calendar.getInstance()
+
+        // Clear the existing data in the list before loading new data
+        calendarData.clear()
+
         var currentMonth = startMonth
         var currentYear = startYear
 
@@ -94,23 +98,37 @@ class CalenderFragment : Fragment() {
             val firstDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK) // Day of the week of the 1st day
 
             val days = mutableListOf<DayModel>()
-            // Add padding for days before the 1st
             for (i in 1 until firstDayOfWeek) {
-                days.add(DayModel(dayNumber = 0, dayOfWeek = DayOfWeek.values()[(i - 1) % 7], imageRes = null))
+                days.add(
+                    DayModel(
+                        dayNumber = 0,
+                        dayOfWeek = DayOfWeek.values()[(i - 1) % 7],
+                        date = null, // Tambahkan nilai null untuk tanggal
+                        imageRes = null
+                    )
+                )
             }
+
             // Add actual days of the month
             for (dayNumber in 1..daysInMonth) {
                 val dayOfWeekIndex = (firstDayOfWeek - 1 + (dayNumber - 1)) % 7
+
+                // Hitung tanggal berdasarkan tahun, bulan, dan hari
+                calendar.set(currentYear, currentMonth, dayNumber)
+                val date = calendar.time // Objek Date untuk tanggal spesifik
+
                 days.add(
                     DayModel(
                         dayNumber = dayNumber,
                         dayOfWeek = DayOfWeek.values()[dayOfWeekIndex],
+                        date = date, // Tambahkan nilai date
                         imageRes = R.drawable.sample_image,
                         isSelected = false
                     )
                 )
             }
 
+            // Add the month to the calendarData list
             calendarData.add(MonthModel(name = monthName, days = days))
 
             // Stop if we reach the end month and year
@@ -126,6 +144,7 @@ class CalenderFragment : Fragment() {
 
         adapter.notifyDataSetChanged()
     }
+
 
     private fun getMonthName(month: Int): String {
         return listOf(

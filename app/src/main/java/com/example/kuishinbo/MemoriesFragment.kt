@@ -4,7 +4,6 @@ import android.content.ContentValues
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
-import java.util.*
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
@@ -19,16 +18,12 @@ import androidx.fragment.app.Fragment
 import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.QuerySnapshot
-import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.Query
-import com.google.firebase.auth.FirebaseAuth
-import androidx.constraintlayout.widget.ConstraintLayout
 import com.example.kuishinbo.databinding.FragmentMemoriesBinding
-import com.google.firebase.firestore.QueryDocumentSnapshot
-import java.text.ParseException
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
-import java.util.Locale
+import java.util.*
 
 class MemoriesFragment : Fragment() {
 
@@ -40,8 +35,6 @@ class MemoriesFragment : Fragment() {
     private lateinit var placeDescription: TextView
     private lateinit var placeRating: RatingBar
     private lateinit var shareOptions: LinearLayout
-    private lateinit var instagramButton: ImageButton
-    private lateinit var whatsappButton: ImageButton
     private lateinit var othersButton: ImageButton
     private lateinit var downloadButton: ImageButton
     private val db = FirebaseFirestore.getInstance()
@@ -54,7 +47,8 @@ class MemoriesFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         val binding = FragmentMemoriesBinding.inflate(inflater, container, false)
-        val rootView = binding.root
+        val selectedDate = requireActivity().intent.getStringExtra("selected_date")
+        val imageUrl = requireActivity().intent.getStringExtra("image_url")
 
         // Initialize UI components
         backButton = binding.backButton
@@ -65,54 +59,89 @@ class MemoriesFragment : Fragment() {
         placeDescription = binding.placeDescription
         placeRating = binding.placeRating
         shareOptions = binding.shareOptions
-        instagramButton = binding.instagramButton
-        whatsappButton = binding.whatsappButton
         othersButton = binding.othersButton
         downloadButton = binding.downloadButton
 
+        // Reverse swipe direction
+        photoViewer.layoutDirection = View.LAYOUT_DIRECTION_LTR
+
         // Load memory data from Firebase
-        loadMemoryData()
+        loadMemoryData(selectedDate, imageUrl)
+
+        // Settings button functionality
+        settingsButton.setOnClickListener {
+            (activity as? MainActivity)?.navigateToSettingFragment()
+        }
 
         // Set back button click listener
-        backButton.setOnClickListener {
+        binding.backButton.setOnClickListener {
             requireActivity().onBackPressed()
         }
 
-        return rootView
+        return binding.root
     }
 
-    private fun loadMemoryData() {
-        memoriesCollection.orderBy("timestamp", Query.Direction.DESCENDING)
-            .get()
+    private fun loadMemoryData(selectedDate: String?, imageUrl: String?) {
+        val query = if (selectedDate != null) {
+            // Filter memories based on selectedDate
+            memoriesCollection
+                .orderBy("timestamp", Query.Direction.ASCENDING)
+        } else {
+            // Load all memories if no selectedDate
+            memoriesCollection.orderBy("timestamp", Query.Direction.ASCENDING)
+        }
+
+        query.get()
             .addOnSuccessListener { documents ->
                 if (documents.isEmpty) {
                     return@addOnSuccessListener
                 }
 
                 memoryList = documents.map { doc ->
+                    val timestamp = doc.getTimestamp("timestamp") // Ensure it's a Timestamp object
+                    val timestampString = timestamp?.toDate()?.let { formatDate(it) } ?: "Unknown"
+
                     MemoryData(
                         doc.getString("placeName") ?: "",
                         doc.getString("description") ?: "",
                         doc.getString("imageUrl") ?: "",
                         doc.getDouble("rating")?.toFloat() ?: 0f,
-                        doc.getString("timestamp") ?: ""
+                        timestamp ?: Timestamp.now() // Store Timestamp object
                     )
                 }
 
-                // Set the adapter with the loaded data
+                // If imageUrl is given, show the photo and details for that date
+                imageUrl?.let {
+                    val selectedMemory = memoryList.find { memory -> memory.imageUrl == it }
+                    selectedMemory?.let { memory ->
+                        updateMemoryDetails(memory)
+                    }
+                }
+
+                // If selectedDate is given, find the memory matching that date
+                if (selectedDate != null) {
+                    val selectedMemory = memoryList.find { memory ->
+                        formatDate(memory.timestamp.toDate()).contains(selectedDate)
+                    }
+                    selectedMemory?.let { memory ->
+                        updateMemoryDetails(memory)
+                        val selectedPosition = memoryList.indexOf(memory)
+                        photoViewer.setCurrentItem(selectedPosition)
+                    }
+                } else {
+                    // If no selectedDate, show the first photo
+                    updateMemoryDetails(memoryList[0])
+                }
+
+                // Set adapter with loaded data
                 val photoAdapter = PhotoAdapter(requireContext(), memoryList)
                 photoViewer.adapter = photoAdapter
 
-                // Set first memory details initially
-                updateMemoryDetails(memoryList[0])
-
                 // Set share button listeners
-                instagramButton.setOnClickListener { shareToInstagram() }
-                whatsappButton.setOnClickListener { shareToWhatsApp() }
                 othersButton.setOnClickListener { shareToOthers() }
                 downloadButton.setOnClickListener { downloadImage(memoryList[0].imageUrl) }
 
-                // Listen for page change to update details
+                // Listen for page changes to update details
                 photoViewer.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
                     override fun onPageSelected(position: Int) {
                         super.onPageSelected(position)
@@ -125,43 +154,17 @@ class MemoriesFragment : Fragment() {
             }
     }
 
+    // Helper function to format Date into String
+    fun formatDate(date: Date): String {
+        val formatter = SimpleDateFormat("dd MMMM yyyy 'at' hh:mm:ss", Locale("id", "ID"))
+        return formatter.format(date)
+    }
+
     private fun updateMemoryDetails(memory: MemoryData) {
         placeName.text = memory.placeName
         placeDescription.text = memory.description
         placeRating.rating = memory.rating
-        photoDetails.text = formatTimestamp(memory.timestamp)
-    }
-
-    private fun formatTimestamp(timestamp: String): String? {
-        return try {
-            val dateFormat = SimpleDateFormat("MMMM dd, yyyy 'at' hh:mm:ss a 'UTC'Z", Locale.getDefault())
-            val date = dateFormat.parse(timestamp)
-            android.text.format.DateFormat.format("MMMM dd, yyyy\nhh:mm a", date).toString()
-        } catch (e: ParseException) {
-            null
-        }
-    }
-
-    private fun shareToInstagram() {
-        // Example logic for sharing to Instagram
-        val imageUrl = memoryList[photoViewer.currentItem].imageUrl
-        val shareIntent = Intent().apply {
-            action = Intent.ACTION_SEND
-            putExtra(Intent.EXTRA_STREAM, Uri.parse(imageUrl)) // Adjust if needed
-            type = "image/*"
-        }
-        startActivity(Intent.createChooser(shareIntent, "Share via"))
-    }
-
-    private fun shareToWhatsApp() {
-        // Example logic for sharing to WhatsApp
-        val imageUrl = memoryList[photoViewer.currentItem].imageUrl
-        val shareIntent = Intent().apply {
-            action = Intent.ACTION_SEND
-            putExtra(Intent.EXTRA_TEXT, imageUrl)
-            type = "text/plain"
-        }
-        startActivity(Intent.createChooser(shareIntent, "Share via"))
+        photoDetails.text = memory.timestamp.toDate().let { formatDate(it) }
     }
 
     private fun shareToOthers() {
@@ -197,13 +200,26 @@ class MemoriesFragment : Fragment() {
             }
         }
     }
+
+    override fun onResume() {
+        super.onResume()
+        val bottomNavigationView = activity?.findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        bottomNavigationView?.visibility = View.GONE
+    }
+
+    override fun onPause() {
+        super.onPause()
+        val bottomNavigationView = activity?.findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        bottomNavigationView?.visibility = View.VISIBLE
+    }
 }
 
+// Modify MemoryData to match your actual constructor
 data class MemoryData(
     val placeName: String,
     val description: String,
     val imageUrl: String,
     val rating: Float,
-    val timestamp: String
+    val timestamp: Timestamp // Ensure you store Timestamp, not String
 )
 
