@@ -169,24 +169,6 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
-
-
-    private fun addSampleMarkers() {
-        val locations = listOf(
-            Pair(LatLng(-6.2088, 106.8456), "Bebek Biryani"),
-            Pair(LatLng(-6.2100, 106.8470), "Favorite Restaurant"),
-            Pair(LatLng(-6.2070, 106.8440), "Coffee Shop")
-        )
-
-        locations.forEach { (position, title) ->
-            googleMap?.addMarker(
-                MarkerOptions()
-                    .position(position)
-                    .title(title)
-            )
-        }
-    }
-
     private fun loadProfileImage() {
         val user = auth.currentUser
         if (user != null) {
@@ -212,29 +194,34 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
     private fun fetchUserPlacesMarkers() {
         val user = auth.currentUser
         if (user != null) {
-            db.collection("places")
+            db.collection("memories")
                 .whereEqualTo("userId", user.uid)
                 .get()
                 .addOnSuccessListener { querySnapshot ->
                     for (document in querySnapshot.documents) {
+                        // Ambil location dari document sebagai Map<String, Double>
                         val locationMap = document.get("location") as? Map<String, Double>
-                        val name = document.getString("name")
+                        // Ambil name dari document
+                        val name = document.getString("placeName")
 
+                        // Pastikan locationMap tidak null dan name ada
                         locationMap?.let { location ->
                             val latLng = LatLng(
-                                location["latitude"] ?: 0.0,
-                                location["longitude"] ?: 0.0
+                                location["latitude"] ?: 0.0,  // Ambil latitude, default ke 0.0
+                                location["longitude"] ?: 0.0   // Ambil longitude, default ke 0.0
                             )
 
+                            // Tambahkan marker ke peta
                             googleMap?.addMarker(
                                 MarkerOptions()
-                                    .position(latLng)
-                                    .title(name ?: "Unnamed Place")
+                                    .position(latLng)  // Posisi marker menggunakan latLng
+                                    .title(name ?: "Unknown Place")  // Set title dengan nama tempat, atau "Unknown Place" jika null
                             )
                         }
                     }
                 }
                 .addOnFailureListener { e ->
+                    // Menampilkan toast jika terjadi kegagalan saat mengambil data
                     Toast.makeText(
                         context,
                         "Failed to fetch places: ${e.message}",
@@ -243,6 +230,7 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
                 }
         }
     }
+
     override fun onDestroyView() {
         super.onDestroyView()
         googleMap = null

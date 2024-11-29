@@ -26,6 +26,10 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 class AddPlaceDetailFragment : Fragment() {
 
@@ -162,13 +166,25 @@ class AddPlaceDetailFragment : Fragment() {
             return
         }
 
+        // Format timestamp to the desired format
+        val timestamp = System.currentTimeMillis()
+        val dateFormat = SimpleDateFormat("MMMM dd, yyyy 'at' hh:mm:ss a 'UTC'Z", Locale.getDefault())
+        dateFormat.timeZone = TimeZone.getTimeZone("GMT+7") // Set the timezone to UTC+7 (Jakarta time)
+        val formattedDate = dateFormat.format(Date(timestamp))
+
         val placeData = hashMapOf(
             "userId" to currentUser.uid,
-            "name" to nameEditText.text.toString(),
+            "placeName" to nameEditText.text.toString(),
             "description" to descriptionEditText.text.toString(),
             "rating" to ratingBar.rating,
+            "location" to selectedLocation?.let {
+                mapOf(
+                    "latitude" to it.latitude,
+                    "longitude" to it.longitude
+                )
+            },
             "imageUrl" to imageUrl,
-            "timestamp" to System.currentTimeMillis()
+            "timestamp" to formattedDate // Use the formatted date instead of the raw timestamp
         )
 
         db.collection("memories")
