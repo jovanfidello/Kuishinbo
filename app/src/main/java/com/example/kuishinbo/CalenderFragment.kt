@@ -1,12 +1,12 @@
 package com.example.kuishinbo
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.kuishinbo.databinding.FragmentCalenderBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -17,11 +17,10 @@ class CalenderFragment : Fragment() {
     private lateinit var binding: FragmentCalenderBinding
     private lateinit var adapter: CalendarAdapter
     private val calendarData = mutableListOf<MonthModel>()
-    private var userSignupTimestamp: Long? = null // To store the timestamp
+    private var userSignupTimestamp: Long? = null
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
-    private var currentMonthIndex = 0 // Keeps track of the current month being displayed
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -37,37 +36,13 @@ class CalenderFragment : Fragment() {
         // Fetch the user's signup timestamp from Firestore
         fetchUserSignupTimestamp()
 
-        // Set up RecyclerView with dynamic loading
+        // Set up RecyclerView
         binding.calendarRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         adapter = CalendarAdapter(calendarData)
         binding.calendarRecyclerView.adapter = adapter
-
-        binding.calendarRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-
-                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-                val totalItemCount = layoutManager.itemCount
-                val lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition()
-
-                // Debugging log
-                println("Total Item Count: $totalItemCount, Last Visible Item: $lastVisibleItemPosition")
-
-                // If we have scrolled to the bottom, load more months (scrolling down)
-                if (dy > 0 && lastVisibleItemPosition == totalItemCount - 1) {
-                    loadMoreMonths(true) // Pass 'true' for scrolling down
-                }
-
-                // If we have scrolled to the top, load more months (scrolling up)
-                val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition()
-                if (dy < 0 && firstVisibleItemPosition == 0) {
-                    loadMoreMonths(false) // Pass 'false' for scrolling up
-                }
-            }
-        })
     }
 
-    // This method fetches the user's signup timestamp from Firestore
+    // Fetch the user's signup timestamp from Firestore
     private fun fetchUserSignupTimestamp() {
         val user = auth.currentUser
         user?.let {
@@ -80,90 +55,75 @@ class CalenderFragment : Fragment() {
                     }
                 }
                 .addOnFailureListener { e ->
-                    // Handle failure to fetch data
+                    Log.e("CalenderFragment", "Error fetching signup timestamp: ${e.message}")
                 }
         }
     }
 
-    // This method sets up the calendar based on the user's signup timestamp
-// This method sets up the calendar based on the user's signup timestamp
+    // Set up the calendar from the signup date to the current date
     private fun setupCalendar(signupTimestamp: Long) {
-        val calendar = Calendar.getInstance()
-        calendar.timeInMillis = signupTimestamp * 1000  // Convert timestamp to milliseconds
+        val signupCalendar = Calendar.getInstance().apply {
+            timeInMillis = signupTimestamp * 1000 // Convert seconds to milliseconds
+        }
+        val currentCalendar = Calendar.getInstance()
 
-        // Get the month and year from the timestamp
-        val signupMonth = calendar.get(Calendar.MONTH)
-        val signupYear = calendar.get(Calendar.YEAR)
+        val signupMonth = signupCalendar.get(Calendar.MONTH)
+        val signupYear = signupCalendar.get(Calendar.YEAR)
+        val currentMonth = currentCalendar.get(Calendar.MONTH)
+        val currentYear = currentCalendar.get(Calendar.YEAR)
 
-        // Generate the calendar data starting from the user's signup month
-        loadMoreMonths(true, signupMonth, signupYear)  // Pass 'true' to load months downwards
+        // Load calendar data from signup month/year to current month/year
+        loadCalendarData(signupMonth, signupYear, currentMonth, currentYear)
     }
 
-
-    // This method loads more months dynamically
-    private fun loadMoreMonths(isLoadingDown: Boolean, startMonth: Int = 0, startYear: Int = 0) {
+    // Load calendar data for the given range
+    private fun loadCalendarData(
+        startMonth: Int,
+        startYear: Int,
+        endMonth: Int,
+        endYear: Int
+    ) {
         val calendar = Calendar.getInstance()
         var currentMonth = startMonth
         var currentYear = startYear
 
-        // If scrolling down, load months forward
-        if (isLoadingDown) {
-            while (true) {
-                currentMonth += 1
-                if (currentMonth == 12) {
-                    currentMonth = 0
-                    currentYear += 1
-                }
+        while (true) {
+            calendar.set(currentYear, currentMonth, 1) // Set to the 1st day of the current month
+            val monthName = getMonthName(currentMonth) + " $currentYear"
+            val daysInMonth = getDaysInMonth(currentMonth, currentYear)
+            val firstDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK) // Day of the week of the 1st day
 
-                val monthName = getMonthName(currentMonth) + " $currentYear"
-                val daysInMonth = getDaysInMonth(currentMonth, currentYear)
-
-                val days = (1..daysInMonth).mapIndexed { index, dayNumber ->
-                    DayModel(
-                        dayNumber = dayNumber,
-                        dayOfWeek = DayOfWeek.values()[index % 7],
-                        imageRes = R.drawable.sample_image,
-                        isSelected = dayNumber == 13 || dayNumber == 28
-                    )
-                }
-
-                calendarData.add(MonthModel(name = monthName, days = days))
-
-                // Exit condition to prevent infinite loop
-                if (calendarData.size >= 60) {
-                    break
-                }
+            val days = mutableListOf<DayModel>()
+            // Add padding for days before the 1st
+            for (i in 1 until firstDayOfWeek) {
+                days.add(DayModel(dayNumber = 0, dayOfWeek = DayOfWeek.values()[(i - 1) % 7], imageRes = null))
             }
-        } else { // If scrolling up, load months backward
-            while (true) {
-                currentMonth -= 1
-                if (currentMonth == -1) {
-                    currentMonth = 11
-                    currentYear -= 1
-                }
-
-                val monthName = getMonthName(currentMonth) + " $currentYear"
-                val daysInMonth = getDaysInMonth(currentMonth, currentYear)
-
-                val days = (1..daysInMonth).mapIndexed { index, dayNumber ->
+            // Add actual days of the month
+            for (dayNumber in 1..daysInMonth) {
+                val dayOfWeekIndex = (firstDayOfWeek - 1 + (dayNumber - 1)) % 7
+                days.add(
                     DayModel(
                         dayNumber = dayNumber,
-                        dayOfWeek = DayOfWeek.values()[index % 7],
+                        dayOfWeek = DayOfWeek.values()[dayOfWeekIndex],
                         imageRes = R.drawable.sample_image,
-                        isSelected = dayNumber == 13 || dayNumber == 28
+                        isSelected = false
                     )
-                }
+                )
+            }
 
-                calendarData.add(0, MonthModel(name = monthName, days = days)) // Add to the beginning
+            calendarData.add(MonthModel(name = monthName, days = days))
 
-                // Exit condition to prevent infinite loop
-                if (calendarData.size >= 60) {
-                    break
-                }
+            // Stop if we reach the end month and year
+            if (currentMonth == endMonth && currentYear == endYear) break
+
+            // Move to the next month
+            currentMonth += 1
+            if (currentMonth == 12) {
+                currentMonth = 0
+                currentYear += 1
             }
         }
 
-        // Notify the adapter that new data has been added
         adapter.notifyDataSetChanged()
     }
 

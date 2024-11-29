@@ -200,4 +200,7 @@
         <item>Zambia</item>
         <item>Zimbabwe</item>
     </string-array>
+
+    <string name="day_number">12</string>
+
 </resources>
