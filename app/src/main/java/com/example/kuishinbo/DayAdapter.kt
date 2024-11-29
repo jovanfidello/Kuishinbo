@@ -1,7 +1,7 @@
-// DayAdapter.kt
 package com.example.kuishinbo
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -18,13 +18,17 @@ class DayAdapter(private val dayList: List<DayModel>) : RecyclerView.Adapter<Day
 
     override fun onBindViewHolder(holder: DayViewHolder, position: Int) {
         val day = dayList[position]
-        holder.binding.dayText.text = day.dayNumber.toString()
-
-        // Load image if available
-        day.imageRes?.let {
-            Glide.with(holder.itemView.context)
-                .load(it)
-                .into(holder.binding.dayImage)
+        if (day.dayNumber == 0) {
+            holder.binding.dayText.text = ""
+            holder.binding.dayImage.visibility = View.INVISIBLE
+        } else {
+            holder.binding.dayText.text = day.dayNumber.toString()
+            holder.binding.dayImage.visibility = View.VISIBLE
+            day.imageRes?.let {
+                Glide.with(holder.itemView.context)
+                    .load(it)
+                    .into(holder.binding.dayImage)
+            }
         }
     }
 
