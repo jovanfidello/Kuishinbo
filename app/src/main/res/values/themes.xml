@@ -2,7 +2,42 @@
     <style name="Base.Theme.Kuishinbo" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/orange</item>
         <item name="colorPrimaryDark">@color/brown</item>
+
+        <item name="textInputStyle">@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox</item>
+        <item name="android:textViewStyle">@style/AppTextView</item>
+        <item name="android:buttonStyle">@style/AppButton</item>
     </style>
 
     <style name="Theme.Kuishinbo" parent="Base.Theme.Kuishinbo" />
+
+    <style name="Widget.MaterialComponents.TextInputLayout.OutlinedBox" parent="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxCornerRadiusTopStart">12dp</item>
+        <item name="boxCornerRadiusTopEnd">12dp</item>
+        <item name="boxCornerRadiusBottomStart">12dp</item>
+        <item name="boxCornerRadiusBottomEnd">12dp</item>
+        <item name="boxStrokeColor">@color/orange</item>
+        <item name="hintTextColor">@color/brown</item>
+        <item name="android:textColorHint">@color/light_grey</item>
+    </style>
+
+    <style name="AppTextView" parent="android:Widget.TextView">
+<!--        <item name="android:fontFamily">@font/your_font</item>-->
+        <item name="android:textColor">@color/brown</item>
+    </style>
+
+    <style name="AppButton" parent="android:Widget.Button">
+<!--        <item name="android:fontFamily">@font/your_font</item>-->
+        <item name="android:textColor">@color/white_logo</item>
+        <item name="backgroundTint">@color/orange</item>
+        <item name="android:layout_width">0dp</item>
+<!--        <item name="android:layout_marginHorizontal">16dp</item>-->
+    </style>
+
+    <style name="HintText" parent="TextAppearance.Design.Hint">
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="AutoCompleteHintText" parent="Widget.AppCompat.AutoCompleteTextView">
+        <item name="android:textSize">14sp</item>
+    </style>
 </resources>
