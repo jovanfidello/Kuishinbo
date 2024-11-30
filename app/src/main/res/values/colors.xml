@@ -8,9 +8,11 @@
     <color name="colorBg">#EBF4F6</color>
     <color name="light_green">#66BB6A</color>
     <color name="light_red">#EF5350</color>
+    <color name="light_grey">#A5A1A1</color>
     <color name="purple_500">#8C2AED</color>
     <color name="gold">#FFD700</color>
     <color name="brown">#5E3823</color>
     <color name="orange">#F8B101</color>
     <color name="white_logo">#FCFCFC</color>
+    <color name="broken_white">#F5F5F0</color>
 </resources>
