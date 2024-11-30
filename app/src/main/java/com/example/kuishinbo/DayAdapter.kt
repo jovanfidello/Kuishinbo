@@ -10,7 +10,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
+import com.bumptech.glide.request.RequestOptions
 import com.example.kuishinbo.databinding.ItemDayBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -60,12 +62,11 @@ class DayAdapter(private val dayList: List<DayModel>) : RecyclerView.Adapter<Day
                     // Memuat gambar ke ImageView dengan Glide
                     Glide.with(holder.itemView.context)
                         .load(imageUrl)
-                        .placeholder(R.drawable.rounded_corner_background)
                         .error(R.drawable.error_image)
                         .diskCacheStrategy(DiskCacheStrategy.ALL)
                         .skipMemoryCache(false)
                         .transition(DrawableTransitionOptions.withCrossFade())
-                        .override(200, 200)
+                        .apply(RequestOptions.bitmapTransform(RoundedCorners(20)))
                         .into(holder.binding.dayImage)
 
                     // Navigasi ke MemoriesFragment jika ada gambar
