@@ -4,9 +4,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.TextView
 import android.widget.GridLayout
+import android.widget.ImageButton
+import android.widget.ImageView
 import androidx.fragment.app.Fragment
+import com.bumptech.glide.Glide
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -29,6 +33,81 @@ class ProfileFragment : Fragment() {
 
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
+
+        val user = auth.currentUser
+        val nameTextView = view.findViewById<TextView>(R.id.name_text_view)
+        val countryTextView = view.findViewById<TextView>(R.id.country_text_view)
+        val profilePictureView = view.findViewById<ImageView>(R.id.profile_picture_view)
+        val backButton = view.findViewById<ImageButton>(R.id.back_button)
+        val settingsButton = view.findViewById<ImageButton>(R.id.settings_button)
+        val memoriesButton = view.findViewById<Button>(R.id.view_all_memories_button)
+        val userJoinedDateTextView = view.findViewById<TextView>(R.id.user_joined_date)
+
+        // Retrieve user information
+        if (user != null) {
+            db.collection("users").document(user.uid).get()
+                .addOnSuccessListener { document ->
+                    if (document != null && document.exists()) {
+                        val name = document.getString("name")
+                        val country = document.getString("country")
+                        val photoProfileUrl = document.getString("photoProfileUrl")
+                        val timestamp = document.getTimestamp("timestamp")?.toDate()
+
+                        // Display the profile photo or default if null
+                        if (!photoProfileUrl.isNullOrEmpty()) {
+                            Glide.with(this)
+                                .load(photoProfileUrl)
+                                .placeholder(R.drawable.user_default_pp)
+                                .into(profilePictureView)
+                        } else {
+                            profilePictureView.setImageResource(R.drawable.user_default_pp)
+                        }
+
+                        nameTextView.visibility = if (!name.isNullOrEmpty()) {
+                            nameTextView.text = name
+                            View.VISIBLE
+                        } else {
+                            View.GONE
+                        }
+
+                        countryTextView.visibility = if (!country.isNullOrEmpty()) {
+                            countryTextView.text = country
+                            View.VISIBLE
+                        } else {
+                            View.GONE
+                        }
+
+                        // Show the time ago text
+                        if (timestamp != null) {
+                            val timeAgo = getTimeAgo(timestamp)
+                            userJoinedDateTextView.text = "You joined $timeAgo"
+                        }
+
+                        backButton.visibility = View.VISIBLE
+                        settingsButton.visibility = View.VISIBLE
+                    } else {
+                        nameTextView.visibility = View.GONE
+                        countryTextView.visibility = View.GONE
+                        backButton.visibility = View.VISIBLE
+                        settingsButton.visibility = View.VISIBLE
+                    }
+                }
+        }
+
+        // Back button functionality
+        backButton.setOnClickListener {
+            (activity as? MainActivity)?.navigateToHomeFragment()
+        }
+
+        // Settings button functionality
+        settingsButton.setOnClickListener {
+            (activity as? MainActivity)?.navigateToSettingFragment()
+        }
+
+        // Memories button functionality
+        memoriesButton.setOnClickListener {
+            (activity as? MainActivity)?.navigateToCalenderFragment()
+        }
 
         val dateGridLayout = view.findViewById<GridLayout>(R.id.date_grid_layout)
 
@@ -63,20 +142,22 @@ class ProfileFragment : Fragment() {
         return view
     }
 
-
     // Hide bottom navigation when ProfileFragment is shown
     override fun onResume() {
         super.onResume()
-        val bottomNavigationView = activity?.findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        val bottomNavigationView =
+            activity?.findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNavigationView?.visibility = View.GONE
     }
 
     // Show bottom navigation when leaving ProfileFragment
     override fun onPause() {
         super.onPause()
-        val bottomNavigationView = activity?.findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        val bottomNavigationView =
+            activity?.findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNavigationView?.visibility = View.VISIBLE
     }
+
     // Function to get time ago in human-readable format
     fun getTimeAgo(timestamp: Date): String {
         val now = System.currentTimeMillis()
@@ -100,5 +181,4 @@ class ProfileFragment : Fragment() {
             else -> "$years years ago"  // 2 years ago, 3 years ago, ...
         }
     }
-
 }
