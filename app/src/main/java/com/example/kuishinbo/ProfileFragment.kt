@@ -4,16 +4,17 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.ImageButton
-import android.widget.ImageView
 import android.widget.TextView
+import android.widget.GridLayout
 import androidx.fragment.app.Fragment
-import com.bumptech.glide.Glide
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
+import java.util.Locale
+
 
 class ProfileFragment : Fragment() {
 
@@ -29,83 +30,39 @@ class ProfileFragment : Fragment() {
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
 
-        val user = auth.currentUser
-        val nameTextView = view.findViewById<TextView>(R.id.name_text_view)
-        val countryTextView = view.findViewById<TextView>(R.id.country_text_view)
-        val profilePictureView = view.findViewById<ImageView>(R.id.profile_picture_view)
-        val backButton = view.findViewById<ImageButton>(R.id.back_button)
-        val settingsButton = view.findViewById<ImageButton>(R.id.settings_button)
-        val memoriesButton = view.findViewById<Button>(R.id.view_all_memories_button)
-        val userJoinedDateTextView = view.findViewById<TextView>(R.id.user_joined_date)
+        val dateGridLayout = view.findViewById<GridLayout>(R.id.date_grid_layout)
 
-        // Retrieve user information
-        if (user != null) {
-            db.collection("users").document(user.uid).get()
-                .addOnSuccessListener { document ->
-                    if (document != null && document.exists()) {
-                        val name = document.getString("name")
-                        val country = document.getString("country")
-                        val photoProfileUrl = document.getString("photoProfileUrl")
-                        val timestamp = document.getTimestamp("timestamp")?.toDate()
+        // Format tanggal
+        val dateFormat = SimpleDateFormat("dd", Locale.getDefault())
+        val calendar = Calendar.getInstance()
 
-                        // Display the profile photo or default if null
-                        if (!photoProfileUrl.isNullOrEmpty()) {
-                            Glide.with(this)
-                                .load(photoProfileUrl)
-                                .placeholder(R.drawable.user_default_pp)
-                                .into(profilePictureView)
-                        } else {
-                            profilePictureView.setImageResource(R.drawable.user_default_pp)
-                        }
+        // Loop untuk menambahkan 14 hari terakhir
+        for (i in 13 downTo 0) {
+            // Hitung tanggal
+            calendar.time = Date()
+            calendar.add(Calendar.DAY_OF_YEAR, -i)
+            val dateText = dateFormat.format(calendar.time)
 
-                        nameTextView.visibility = if (!name.isNullOrEmpty()) {
-                            nameTextView.text = name
-                            View.VISIBLE
-                        } else {
-                            View.GONE
-                        }
-
-                        countryTextView.visibility = if (!country.isNullOrEmpty()) {
-                            countryTextView.text = country
-                            View.VISIBLE
-                        } else {
-                            View.GONE
-                        }
-
-                        // Show the time ago text
-                        if (timestamp != null) {
-                            val timeAgo = getTimeAgo(timestamp)
-                            userJoinedDateTextView.text = "You joined $timeAgo"
-                        }
-
-                        backButton.visibility = View.VISIBLE
-                        settingsButton.visibility = View.VISIBLE
-                    } else {
-                        nameTextView.visibility = View.GONE
-                        countryTextView.visibility = View.GONE
-                        backButton.visibility = View.VISIBLE
-                        settingsButton.visibility = View.VISIBLE
-                    }
+            // Buat TextView untuk tanggal
+            val dateTextView = TextView(requireContext()).apply {
+                layoutParams = GridLayout.LayoutParams().apply {
+                    width = 120 // Lebar TextView
+                    height = 120 // Tinggi TextView
+                    setMargins(8, 8, 8, 8) // Margin antar elemen
                 }
-        }
+                gravity = android.view.Gravity.CENTER
+                background = requireContext().getDrawable(R.drawable.border_background)
+                text = dateText
+                textSize = 14f
+            }
 
-        // Back button functionality
-        backButton.setOnClickListener {
-            (activity as? MainActivity)?.navigateToHomeFragment()
-        }
-
-        // Settings button functionality
-        settingsButton.setOnClickListener {
-            (activity as? MainActivity)?.navigateToSettingFragment()
-        }
-
-        // Memories button functionality
-        memoriesButton.setOnClickListener {
-            (activity as? MainActivity)?.navigateToCalenderFragment()
+            // Tambahkan TextView ke GridLayout
+            dateGridLayout.addView(dateTextView)
         }
 
         return view
     }
+
 
     // Hide bottom navigation when ProfileFragment is shown
     override fun onResume() {
