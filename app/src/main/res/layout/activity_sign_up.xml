@@ -7,59 +7,62 @@
     android:background="@color/white"
     tools:context=".SignUpActivity">
 
-    <!-- Logo Image -->
     <ImageView
         android:id="@+id/app_logo"
-        android:layout_width="250dp"
-        android:layout_height="100dp"
+        android:layout_width="300dp"
+        android:layout_height="150dp"
         android:layout_marginTop="64dp"
         android:layout_marginBottom="32dp"
-        android:src="@drawable/app_logo_text"
+        android:src="@drawable/app_ic_logo"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Name Input -->
     <EditText
         android:id="@+id/name"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:hint="Name"
+        android:inputType="textPersonName"
         android:background="@drawable/edit_text_background"
         app:layout_constraintTop_toBottomOf="@id/app_logo"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_margin="16dp"
-        android:padding="12dp" />
+        android:padding="12dp"
+        android:textColor="@color/brown"
+        android:textColorHint="@color/brown" />
 
-    <!-- Country Input (AutoCompleteTextView) -->
     <AutoCompleteTextView
         android:id="@+id/country"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:hint="Select your Country"
-        android:background="@drawable/edit_text_background"
         android:completionThreshold="1"
+        android:background="@drawable/edit_text_background"
         app:layout_constraintTop_toBottomOf="@id/name"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_margin="16dp"
-        android:padding="12dp" />
+        android:padding="12dp"
+        android:textColor="@color/brown"
+        android:textColorHint="@color/brown"  />
 
-    <!-- Email Input -->
     <EditText
         android:id="@+id/email"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:hint="Email"
+        android:inputType="textEmailAddress"
         android:background="@drawable/edit_text_background"
         app:layout_constraintTop_toBottomOf="@id/country"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_margin="16dp"
-        android:padding="12dp" />
+        android:padding="12dp"
+        android:textColor="@color/brown"
+        android:textColorHint="@color/brown"  />
 
-    <!-- Password Input -->
     <EditText
         android:id="@+id/password"
         android:layout_width="0dp"
@@ -71,9 +74,10 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_margin="16dp"
-        android:padding="12dp" />
+        android:padding="12dp"
+        android:textColor="@color/brown"
+        android:textColorHint="@color/brown"  />
 
-    <!-- Password Visibility Toggle -->
     <ImageView
         android:id="@+id/password_toggle"
         android:layout_width="24dp"
@@ -83,9 +87,9 @@
         app:layout_constraintTop_toTopOf="@id/password"
         app:layout_constraintBottom_toBottomOf="@id/password"
         app:layout_constraintEnd_toEndOf="@id/password"
-        android:layout_marginEnd="16dp" />
+        android:layout_marginEnd="16dp"
+        app:tint="@color/brown" />
 
-    <!-- Re-confirm Password Input -->
     <EditText
         android:id="@+id/reconfirm_password"
         android:layout_width="0dp"
@@ -97,9 +101,10 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_margin="16dp"
-        android:padding="12dp" />
+        android:padding="12dp"
+        android:textColor="@color/brown"
+        android:textColorHint="@color/brown"  />
 
-    <!-- Re-confirm Password Visibility Toggle -->
     <ImageView
         android:id="@+id/reconfirm_password_toggle"
         android:layout_width="24dp"
@@ -109,29 +114,28 @@
         app:layout_constraintTop_toTopOf="@id/reconfirm_password"
         app:layout_constraintBottom_toBottomOf="@id/reconfirm_password"
         app:layout_constraintEnd_toEndOf="@id/reconfirm_password"
-        android:layout_marginEnd="16dp" />
+        android:layout_marginEnd="16dp"
+        app:tint="@color/brown" />
 
-    <!-- Sign Up Button -->
     <Button
         android:id="@+id/signup_button"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Sign Up"
-        android:backgroundTint="@color/colorPrimary"
-        android:textColor="@android:color/white"
+        android:backgroundTint="@color/orange"
+        android:textColor="@color/white_logo"
         app:layout_constraintTop_toBottomOf="@id/reconfirm_password"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="16dp"
         android:layout_marginHorizontal="16dp" />
 
-    <!-- Sign In Redirect -->
     <TextView
         android:id="@+id/signin_redirect_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Already have an account? Sign In"
-        android:textColor="@color/colorPrimary"
+        android:textColor="@color/orange"
         android:textStyle="bold"
         android:clickable="true"
         android:focusable="true"
@@ -139,4 +143,5 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="16dp" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
