@@ -9,6 +9,8 @@ import android.widget.TextView
 import android.widget.GridLayout
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -42,6 +44,10 @@ class ProfileFragment : Fragment() {
         val settingsButton = view.findViewById<ImageButton>(R.id.settings_button)
         val memoriesButton = view.findViewById<Button>(R.id.view_all_memories_button)
         val userJoinedDateTextView = view.findViewById<TextView>(R.id.user_joined_date)
+        val pinsContainer = view.findViewById<LinearLayout>(R.id.pins_container)
+        val pinsContain1 = view.findViewById<ImageView>(R.id.pins_contain1)
+        val pinsContain2 = view.findViewById<ImageView>(R.id.pins_contain2)
+        val pinsContain3 = view.findViewById<ImageView>(R.id.pins_contain3)
 
         // Retrieve user information
         if (user != null) {
@@ -91,6 +97,106 @@ class ProfileFragment : Fragment() {
                         backButton.visibility = View.VISIBLE
                         settingsButton.visibility = View.VISIBLE
                     }
+                }
+
+            // Retrieve pins photo
+            // Ambil koleksi pins milik user dan filter berdasarkan isPinned == true
+            db.collection("memories")
+                .whereEqualTo("userId", user.uid)
+                .whereEqualTo("isPinned", true)
+                .get()
+                .addOnSuccessListener { querySnapshot ->
+                    // Cek apakah ada dokumen dalam koleksi pins
+                    if (!querySnapshot.isEmpty) {
+                        val pinList = querySnapshot.documents.map { it.getString("imageUrl") }
+
+                        // Tampilkan gambar-gambar yang dipin jika belum mencapai batas 3
+                        if (pinList.size < 3) {
+                            // Loop untuk menambahkan gambar ke ImageView yang ada
+                            pinList.forEachIndexed { index, imageUrl ->
+                                if (imageUrl != null && index < 3) {
+                                    // Cari ImageView sesuai dengan urutan
+                                    val imageView = when (index) {
+                                        0 -> pinsContain1
+                                        1 -> pinsContain2
+                                        2 -> pinsContain3
+                                        else -> null
+                                    }
+
+                                    // Set gambar ke ImageView yang ditemukan
+                                    imageView?.let {
+                                        Glide.with(this@ProfileFragment)
+                                            .load(imageUrl)
+                                            .placeholder(R.drawable.empty_pin_photo)
+                                            .into(it)
+                                        it.setOnClickListener {
+                                            if (imageUrl.isNotEmpty()) {
+                                                (activity as? MainActivity)?.navigateToMemoriesFragment()
+                                            } else if (imageUrl.isNullOrEmpty()){
+                                                (activity as? MainActivity)?.navigateToCalenderFragment()
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            // Tampilkan pesan atau placeholder jika sudah ada 3 gambar yang dipin
+                            val maxPinImageView = ImageView(requireContext()).apply {
+                                layoutParams = LinearLayout.LayoutParams(0, 150).apply {
+                                    weight = 1f
+                                    marginStart = 8
+                                }
+                                setImageResource(R.drawable.empty_pin_photo)
+                                background = requireContext().getDrawable(R.drawable.image_preview_background)
+                                setContentDescription("Maximum pinned images reached.")
+                            }
+                            pinsContainer.addView(maxPinImageView)
+                        }
+                    } else {
+                        // Tampilkan placeholder jika tidak ada foto yang dipin
+                        val emptyPinImageView = ImageView(requireContext()).apply {
+                            layoutParams = LinearLayout.LayoutParams(0, 150).apply {
+                                weight = 1f
+                                marginStart = 8
+                            }
+                            setImageResource(R.drawable.empty_pin_photo)
+                            background = requireContext().getDrawable(R.drawable.image_preview_background)
+                        }
+                        pinsContainer.addView(emptyPinImageView)
+                    }
+                }
+                .addOnFailureListener { e ->
+                    // Tangani kegagalan
+                    Toast.makeText(requireContext(), "Failed to load pinned images.", Toast.LENGTH_SHORT).show()
+                }
+
+            // Retrieve last 14 day memories
+            // Get the current date and subtract 14 days
+            val calendar = Calendar.getInstance()
+            calendar.add(Calendar.DAY_OF_YEAR, -14)
+            val fourteenDaysAgo = calendar.time
+
+// Retrieve the last 14 days of memories
+            db.collection("memories")
+                .whereEqualTo("userId", user.uid) // Assuming userId is the field used to associate the memories with the user
+                .whereGreaterThanOrEqualTo("timestamp", fourteenDaysAgo) // Filter based on timestamp
+                .get()
+                .addOnSuccessListener { querySnapshot ->
+                    val imageUrls = mutableListOf<String>()
+
+                    // Iterate over the documents and collect the image URLs
+                    for (document in querySnapshot.documents) {
+                        val imageUrl = document.getString("imageUrl")
+                        if (!imageUrl.isNullOrEmpty()) {
+                            imageUrls.add(imageUrl)
+                        }
+                    }
+
+                    // Add images to GridLayout
+                    displayImagesInGridLayout(imageUrls)
+                }
+                .addOnFailureListener { e ->
+                    Toast.makeText(requireContext(), "Failed to load memories.", Toast.LENGTH_SHORT).show()
                 }
         }
 
@@ -142,21 +248,29 @@ class ProfileFragment : Fragment() {
         return view
     }
 
-    // Hide bottom navigation when ProfileFragment is shown
-    override fun onResume() {
-        super.onResume()
-        val bottomNavigationView =
-            activity?.findViewById<BottomNavigationView>(R.id.bottom_navigation)
-        bottomNavigationView?.visibility = View.GONE
+    private fun displayImagesInGridLayout(imageUrls: List<String>) {
+        val dateGridLayout = view?.findViewById<GridLayout>(R.id.date_grid_layout)
+        imageUrls.forEach { imageUrl ->
+            // Create an ImageView for each image URL
+            val imageView = ImageView(requireContext()).apply {
+                layoutParams = GridLayout.LayoutParams().apply {
+                    width = 120 // Set width as required
+                    height = 120 // Set height as required
+                    setMargins(8, 8, 8, 8) // Margin between images
+                }
+                setImageResource(R.drawable.empty_pin_photo) // Default image
+                Glide.with(this@ProfileFragment)
+                    .load(imageUrl)
+                    .placeholder(R.drawable.empty_pin_photo)
+                    .into(this) // Load image into the ImageView
+            }
+
+            // Add the ImageView to the GridLayout
+            dateGridLayout?.addView(imageView)
+        }
     }
 
-    // Show bottom navigation when leaving ProfileFragment
-    override fun onPause() {
-        super.onPause()
-        val bottomNavigationView =
-            activity?.findViewById<BottomNavigationView>(R.id.bottom_navigation)
-        bottomNavigationView?.visibility = View.VISIBLE
-    }
+
 
     // Function to get time ago in human-readable format
     fun getTimeAgo(timestamp: Date): String {
@@ -180,5 +294,21 @@ class ProfileFragment : Fragment() {
             years == 1L -> "1 year ago"  // 1 year ago
             else -> "$years years ago"  // 2 years ago, 3 years ago, ...
         }
+    }
+
+    // Hide bottom navigation when ProfileFragment is shown
+    override fun onResume() {
+        super.onResume()
+        val bottomNavigationView =
+            activity?.findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        bottomNavigationView?.visibility = View.GONE
+    }
+
+    // Show bottom navigation when leaving ProfileFragment
+    override fun onPause() {
+        super.onPause()
+        val bottomNavigationView =
+            activity?.findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        bottomNavigationView?.visibility = View.VISIBLE
     }
 }

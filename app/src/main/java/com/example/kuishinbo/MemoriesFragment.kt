@@ -15,9 +15,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.RatingBar
 import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.cardview.widget.CardView
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
@@ -26,6 +30,7 @@ import com.google.firebase.firestore.Query
 import com.example.kuishinbo.databinding.FragmentMemoriesBinding
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.Timestamp
+import com.google.firebase.auth.FirebaseAuth
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.*
@@ -41,6 +46,9 @@ class MemoriesFragment : Fragment() {
     private lateinit var placeRating: RatingBar
     private lateinit var shareOptions: LinearLayout
     private lateinit var othersButton: ImageButton
+    private lateinit var settingsModalCard: CardView
+    private lateinit var addPinMemory: LinearLayout
+    private lateinit var deleteMemory: LinearLayout
     private val db = FirebaseFirestore.getInstance()
     private val memoriesCollection = db.collection("memories")
 
@@ -64,6 +72,9 @@ class MemoriesFragment : Fragment() {
         placeRating = binding.placeRating
         shareOptions = binding.shareOptions
         othersButton = binding.othersButton
+        settingsModalCard = binding.settingsModalCard
+        addPinMemory = binding.addPinMemory
+        deleteMemory = binding.deleteMemory
 
         // Reverse swipe direction
         photoViewer.layoutDirection = View.LAYOUT_DIRECTION_LTR
@@ -71,9 +82,79 @@ class MemoriesFragment : Fragment() {
         // Load memory data from Firebase
         loadMemoryData(selectedDate, imageUrl)
 
-        // Settings button functionality
+        // Toggle modal visibility when settings button is clicked
         settingsButton.setOnClickListener {
-            (activity as? MainActivity)?.navigateToSettingFragment()
+            if (settingsModalCard.visibility == View.GONE) {
+                settingsModalCard.visibility = View.VISIBLE
+            } else {
+                settingsModalCard.visibility = View.GONE
+            }
+        }
+
+        // Handle Add Pin Memory option
+        addPinMemory.setOnClickListener {
+            val memory = memoryList[photoViewer.currentItem]
+            val currentIsPinned = memory.isPinned
+            val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@setOnClickListener
+            // Get the count of pinned memories from Firebase
+            db.collection("memories")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("isPinned", true)
+                .get()
+                .addOnSuccessListener { documents ->
+                    if (documents.size() >= 3 && !currentIsPinned) {
+                        // If there are already 3 pinned photos and the current one is not pinned, show a message
+                        Toast.makeText(requireContext(), "Anda hanya dapat mem-pinned hingga 3 foto.", Toast.LENGTH_SHORT).show()
+                    } else {
+                        // Proceed with updating the pin status
+                        memoriesCollection.whereEqualTo("imageUrl", memory.imageUrl).get()
+                            .addOnSuccessListener { documents ->
+                                for (document in documents) {
+                                    val newIsPinned = !currentIsPinned
+                                    memoriesCollection.document(document.id)
+                                        .update("isPinned", newIsPinned)
+                                        .addOnSuccessListener {
+                                            Toast.makeText(
+                                                requireContext(),
+                                                if (newIsPinned) "Memori berhasil di-pin." else "Pin memori berhasil dihapus.",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+
+                                            // Update UI
+                                            memory.isPinned = newIsPinned
+                                            updatePinButtonUI(newIsPinned)
+                                        }
+                                        .addOnFailureListener {
+                                            Toast.makeText(requireContext(), "Gagal memperbarui status pin memori.", Toast.LENGTH_SHORT).show()
+                                        }
+                                }
+                            }
+                            .addOnFailureListener {
+                                Toast.makeText(requireContext(), "Terjadi kesalahan saat memuat data memori.", Toast.LENGTH_SHORT).show()
+                            }
+                    }
+                }
+                .addOnFailureListener {
+                    Toast.makeText(requireContext(), "Terjadi kesalahan saat memuat data pinned memori.", Toast.LENGTH_SHORT).show()
+                }
+            settingsModalCard.visibility = View.GONE // Hide modal after action
+        }
+
+        // Handle Delete Memory option
+        deleteMemory.setOnClickListener {
+            val memory = memoryList[photoViewer.currentItem]
+
+            // Show confirmation dialog
+            AlertDialog.Builder(requireContext())
+                .setTitle("Konfirmasi Hapus")
+                .setMessage("Apakah Anda yakin ingin menghapus memori ini?")
+                .setPositiveButton("Hapus") { _, _ ->
+                    // Proceed to delete the memory
+                    deleteMemoryFromFirebase(memory)
+                }
+                .setNegativeButton("Batal", null)
+                .show()
+            settingsModalCard.visibility = View.GONE // Hide modal after action
         }
 
         // Set back button click listener
@@ -87,8 +168,7 @@ class MemoriesFragment : Fragment() {
     private fun loadMemoryData(selectedDate: String?, imageUrl: String?) {
         val query = if (selectedDate != null) {
             // Filter memories based on selectedDate
-            memoriesCollection
-                .orderBy("timestamp", Query.Direction.ASCENDING)
+            memoriesCollection.orderBy("timestamp", Query.Direction.ASCENDING)
         } else {
             // Load all memories if no selectedDate
             memoriesCollection.orderBy("timestamp", Query.Direction.ASCENDING)
@@ -101,7 +181,7 @@ class MemoriesFragment : Fragment() {
                 }
 
                 memoryList = documents.map { doc ->
-                    val timestamp = doc.getTimestamp("timestamp") // Ensure it's a Timestamp object
+                    val timestamp = doc.getTimestamp("timestamp")
                     val timestampString = timestamp?.toDate()?.let { formatDate(it) } ?: "Unknown"
 
                     MemoryData(
@@ -109,7 +189,8 @@ class MemoriesFragment : Fragment() {
                         doc.getString("description") ?: "",
                         doc.getString("imageUrl") ?: "",
                         doc.getDouble("rating")?.toFloat() ?: 0f,
-                        timestamp ?: Timestamp.now() // Store Timestamp object
+                        timestamp ?: Timestamp.now(),
+                        doc.getBoolean("isPinned") == true
                     )
                 }
 
@@ -118,6 +199,7 @@ class MemoriesFragment : Fragment() {
                     val selectedMemory = memoryList.find { memory -> memory.imageUrl == it }
                     selectedMemory?.let { memory ->
                         updateMemoryDetails(memory)
+                        updatePinButtonUI(memory.isPinned) // Ensure button reflects the correct state
                     }
                 }
 
@@ -130,10 +212,12 @@ class MemoriesFragment : Fragment() {
                         updateMemoryDetails(memory)
                         val selectedPosition = memoryList.indexOf(memory)
                         photoViewer.setCurrentItem(selectedPosition)
+                        updatePinButtonUI(memory.isPinned) // Ensure button reflects the correct state
                     }
                 } else {
                     // If no selectedDate, show the first photo
                     updateMemoryDetails(memoryList[0])
+                    updatePinButtonUI(memoryList[0].isPinned) // Ensure button reflects the correct state
                 }
 
                 // Set adapter with loaded data
@@ -148,6 +232,7 @@ class MemoriesFragment : Fragment() {
                     override fun onPageSelected(position: Int) {
                         super.onPageSelected(position)
                         updateMemoryDetails(memoryList[position])
+                        updatePinButtonUI(memoryList[position].isPinned) // Update pin button
                     }
                 })
             }
@@ -301,6 +386,33 @@ class MemoriesFragment : Fragment() {
         return uri
     }
 
+    private fun deleteMemoryFromFirebase(memory: MemoryData) {
+        memoriesCollection.whereEqualTo("imageUrl", memory.imageUrl).get()
+            .addOnSuccessListener { documents ->
+                for (document in documents) {
+                    memoriesCollection.document(document.id).delete()
+                        .addOnSuccessListener {
+                            Toast.makeText(requireContext(), "Memori berhasil dihapus.", Toast.LENGTH_SHORT).show()
+                            // Refresh UI
+                            loadMemoryData(null, null)
+                        }
+                        .addOnFailureListener {
+                            Toast.makeText(requireContext(), "Gagal menghapus memori.", Toast.LENGTH_SHORT).show()
+                        }
+                }
+            }
+            .addOnFailureListener {
+                Toast.makeText(requireContext(), "Terjadi kesalahan.", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun updatePinButtonUI(isPinned: Boolean) {
+        val pinText = if (isPinned) "Unpin Memories" else "Pin Memories"
+        val pinIcon = if (isPinned) R.drawable.ic_unpin else R.drawable.ic_pin
+
+        addPinMemory.findViewById<TextView>(R.id.pinTextView)?.text = pinText
+        addPinMemory.findViewById<ImageView>(R.id.pinIconView)?.setImageResource(pinIcon)
+    }
 
     override fun onResume() {
         super.onResume()
@@ -321,6 +433,8 @@ data class MemoryData(
     val description: String,
     val imageUrl: String,
     val rating: Float,
-    val timestamp: Timestamp // Ensure you store Timestamp, not String
+    val timestamp: Timestamp,
+    var isPinned: Boolean = false
 )
+
 

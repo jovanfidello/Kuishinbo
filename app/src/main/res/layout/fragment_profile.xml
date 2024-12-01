@@ -109,6 +109,7 @@
         app:layout_constraintEnd_toEndOf="parent">
 
         <ImageView
+            android:id="@+id/pins_contain1"
             android:layout_width="0dp"
             android:layout_height="150dp"
             android:layout_weight="1"
@@ -117,6 +118,7 @@
             android:contentDescription="Add Pin" />
 
         <ImageView
+            android:id="@+id/pins_contain2"
             android:layout_width="0dp"
             android:layout_height="150dp"
             android:layout_weight="1"
@@ -126,6 +128,7 @@
             android:contentDescription="Add Pin" />
 
         <ImageView
+            android:id="@+id/pins_contain3"
             android:layout_width="0dp"
             android:layout_height="150dp"
             android:layout_weight="1"

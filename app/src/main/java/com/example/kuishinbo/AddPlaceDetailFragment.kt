@@ -180,7 +180,8 @@ class AddPlaceDetailFragment : Fragment() {
                 )
             },
             "imageUrl" to imageUrl,
-            "timestamp" to timestamp // Store Firestore Timestamp instead of formatted string
+            "timestamp" to timestamp,
+            "isPinned" to false
         )
 
         db.collection("memories")

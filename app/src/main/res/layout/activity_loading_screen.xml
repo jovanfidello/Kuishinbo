@@ -9,8 +9,8 @@
 
     <com.airbnb.lottie.LottieAnimationView
         android:id="@+id/lottieLoader"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="250dp"
+        android:layout_height="250dp"
         app:lottie_rawRes="@raw/loader_animation_1"
         app:lottie_autoPlay="false"
         app:lottie_loop="true"
