@@ -15,4 +15,8 @@
     <color name="orange">#F8B101</color>
     <color name="white_logo">#FCFCFC</color>
     <color name="broken_white">#F5F5F0</color>
+    <color name="highlight_color">#FFA726</color>
+    <color name="light_highlight_color">#FFF3E0</color>
+    <color name="highlight_text_color">#FF7043</color>
+
 </resources>

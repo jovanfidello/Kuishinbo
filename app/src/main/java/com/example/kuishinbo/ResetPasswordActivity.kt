@@ -17,6 +17,8 @@ class ResetPasswordActivity : AppCompatActivity() {
     private lateinit var emailEditText: EditText
     private lateinit var successTextView: TextView
     private lateinit var backToLoginTextView: TextView
+    private lateinit var backButtonImageButton: ImageButton
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,7 +29,7 @@ class ResetPasswordActivity : AppCompatActivity() {
         emailEditText = findViewById(R.id.email_edit_text)
         successTextView = findViewById(R.id.success_text_view)
         backToLoginTextView = findViewById(R.id.back_to_login_text_view)
-
+        backButtonImageButton = findViewById(R.id.back_button)
         // Hide success message and back to login option initially
         successTextView.visibility = View.GONE
         backToLoginTextView.visibility = View.GONE
@@ -48,6 +50,11 @@ class ResetPasswordActivity : AppCompatActivity() {
             startActivity(intent)
             finish()
         }
+
+        backButtonImageButton.setOnClickListener {
+            finish()
+        }
+
     }
 
     private fun checkIfEmailExists(email: String) {

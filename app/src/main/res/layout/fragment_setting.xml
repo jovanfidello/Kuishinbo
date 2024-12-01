@@ -78,16 +78,33 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <Button
-                        android:id="@+id/notifications_button"
-                        style="?android:attr/borderlessButtonStyle"
+                    <!-- Notifications -->
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Notifications"
-                        android:textColor="@color/brown"
-                        android:drawablePadding="16dp"
-                        android:gravity="start|center_vertical"
-                        android:padding="16dp"/>
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="16dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_notifications"
+                            android:layout_marginEnd="16dp" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:text="Notifications"
+                            android:textColor="@color/brown"
+                            android:layout_weight="1" />
+
+                        <Switch
+                            android:id="@+id/notifications_switch"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true" />
+                    </LinearLayout>
 
                     <View
                         android:layout_width="match_parent"
@@ -95,16 +112,34 @@
                         android:background="@color/light_grey"
                         android:layout_marginHorizontal="16dp"/>
 
-                    <Button
-                        android:id="@+id/location_button"
-                        style="?android:attr/borderlessButtonStyle"
+                    <!-- Location -->
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Location"
-                        android:textColor="@color/brown"
-                        android:drawablePadding="16dp"
-                        android:gravity="start|center_vertical"
-                        android:padding="16dp"/>
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="16dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_location"
+                            android:layout_marginEnd="16dp" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:text="Location"
+                            android:textColor="@color/brown"
+                            android:layout_weight="1" />
+
+                        <TextView
+                            android:id="@+id/location_subtext"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Jakarta, Indonesia"
+                            android:textColor="@color/light_grey" />
+                    </LinearLayout>
 
                     <View
                         android:layout_width="match_parent"
@@ -112,33 +147,28 @@
                         android:background="@color/light_grey"
                         android:layout_marginHorizontal="16dp"/>
 
-                    <Button
-                        android:id="@+id/time_zone_button"
-                        style="?android:attr/borderlessButtonStyle"
+                    <!-- Others -->
+                    <LinearLayout
+                        android:id="@+id/other_card"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Time Zone"
-                        android:textColor="@color/brown"
-                        android:drawablePadding="16dp"
-                        android:gravity="start|center_vertical"
-                        android:padding="16dp"/>
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="16dp">
 
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="@color/light_grey"
-                        android:layout_marginHorizontal="16dp"/>
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_other_setting"
+                            android:layout_marginEnd="16dp" />
 
-                    <Button
-                        android:id="@+id/other_button"
-                        style="?android:attr/borderlessButtonStyle"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Other"
-                        android:textColor="@color/brown"
-                        android:drawablePadding="16dp"
-                        android:gravity="start|center_vertical"
-                        android:padding="16dp"/>
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:text="Others"
+                            android:textColor="@color/brown"
+                            android:layout_weight="1" />
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -166,16 +196,28 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <Button
-                        android:id="@+id/share_button"
-                        style="?android:attr/borderlessButtonStyle"
+                    <!-- Share Section -->
+                    <LinearLayout
+                        android:id="@+id/share_card"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Share Kuishinbo"
-                        android:textColor="@color/brown"
-                        android:drawablePadding="16dp"
-                        android:gravity="start|center_vertical"
-                        android:padding="16dp"/>
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="16dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_share_kuishinbo"
+                            android:layout_marginEnd="16dp" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:text="Share Kuishinbo"
+                            android:textColor="@color/brown"
+                            android:layout_weight="1" />
+                    </LinearLayout>
 
                     <View
                         android:layout_width="match_parent"
@@ -183,16 +225,28 @@
                         android:background="@color/light_grey"
                         android:layout_marginHorizontal="16dp"/>
 
-                    <Button
-                        android:id="@+id/rate_button"
-                        style="?android:attr/borderlessButtonStyle"
+                    <!-- Rate Section -->
+                    <LinearLayout
+                        android:id="@+id/rate_card"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Rate Kuishinbo"
-                        android:textColor="@color/brown"
-                        android:drawablePadding="16dp"
-                        android:gravity="start|center_vertical"
-                        android:padding="16dp"/>
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="16dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_star"
+                        android:layout_marginEnd="16dp" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:text="Rate Kuishinbo"
+                            android:textColor="@color/brown"
+                            android:layout_weight="1" />
+                    </LinearLayout>
 
                     <View
                         android:layout_width="match_parent"
@@ -200,27 +254,43 @@
                         android:background="@color/light_grey"
                         android:layout_marginHorizontal="16dp"/>
 
-                    <Button
-                        android:id="@+id/about_button"
-                        style="?android:attr/borderlessButtonStyle"
+                    <!-- About Section -->
+                    <LinearLayout
+                        android:id="@+id/about_card"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="About"
-                        android:textColor="@color/brown"
-                        android:drawablePadding="16dp"
-                        android:gravity="start|center_vertical"
-                        android:padding="16dp"/>
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:padding="16dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_about"
+                            android:layout_marginEnd="16dp" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:text="About"
+                            android:textColor="@color/brown"
+                            android:layout_weight="1" />
+
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-
             <Button
                 android:id="@+id/logout_button"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Log out"
-                android:layout_marginHorizontal="16dp"
-                android:backgroundTint="@color/broken_white"
-                android:textColor="@android:color/holo_red_dark" />
+                android:text="Logout"
+                android:layout_marginTop="16dp"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:padding="14dp"
+                android:backgroundTint="@color/light_red"
+                android:layout_gravity="center" />
         </LinearLayout>
     </ScrollView>
 

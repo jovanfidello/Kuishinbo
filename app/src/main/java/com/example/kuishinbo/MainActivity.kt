@@ -125,4 +125,26 @@ class MainActivity : AppCompatActivity() {
             .addToBackStack(null)
             .commit()
     }
+
+    fun navigateToOtherSettingFragment() {
+        val selectedFragment = OtherSettingFragment()
+        supportFragmentManager.beginTransaction()
+            .setCustomAnimations(
+                R.anim.fade_in, R.anim.fade_out
+            )
+            .replace(R.id.fragment_container, selectedFragment)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    fun navigateToAboutFragment() {
+        val selectedFragment = AboutFragment()
+        supportFragmentManager.beginTransaction()
+            .setCustomAnimations(
+                R.anim.fade_in, R.anim.fade_out
+            )
+            .replace(R.id.fragment_container, selectedFragment)
+            .addToBackStack(null)
+            .commit()
+    }
 }
