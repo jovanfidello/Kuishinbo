@@ -9,7 +9,7 @@ import android.view.View
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import com.airbnb.lottie.LottieAnimationView
-import java.util.*
+import kotlin.random.Random
 
 class SplashScreenActivity : AppCompatActivity() {
     private lateinit var logoImageView: ImageView
@@ -18,6 +18,18 @@ class SplashScreenActivity : AppCompatActivity() {
 
     private val SPLASH_SCREEN_DELAY = 2000L
     private val INACTIVITY_THRESHOLD = 30 * 60 * 1000L
+
+    private val loaderAnimations = arrayOf(
+        R.raw.loader_animation_1,
+        R.raw.loader_animation_2,
+        R.raw.loader_animation_3,
+        R.raw.loader_animation_4,
+        R.raw.loader_animation_5,
+        R.raw.loader_animation_6,
+        R.raw.loader_animation_7,
+        R.raw.loader_animation_8,
+        R.raw.loader_animation_9,
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,10 +48,8 @@ class SplashScreenActivity : AppCompatActivity() {
         val currentTime = System.currentTimeMillis()
 
         if (currentTime - lastOpenedTime > INACTIVITY_THRESHOLD) {
-            // App has been inactive for more than the threshold, show splash screen
             showLogoAndLoader()
         } else {
-            // App was opened recently, skip splash screen and navigate to the last page
             navigateToMainActivity()
         }
     }
@@ -49,13 +59,18 @@ class SplashScreenActivity : AppCompatActivity() {
         lottieLoader.visibility = View.GONE
 
         Handler(Looper.getMainLooper()).postDelayed({
-            logoImageView.visibility = View.GONE
+            // Randomly select an animation from the array
+            val randomAnimation = loaderAnimations[Random.nextInt(loaderAnimations.size)]
+            lottieLoader.setAnimation(randomAnimation)
             lottieLoader.visibility = View.VISIBLE
-            lottieLoader.playAnimation()
+            lottieLoader.playAnimation()  // Start animation
+
+            logoImageView.visibility = View.GONE  // Hide logo
 
             // Update the last opened time before navigating
             sharedPreferences.edit().putLong("last_opened_time", System.currentTimeMillis()).apply()
 
+            // Navigate to MainActivity after a delay
             navigateToMainActivity()
         }, SPLASH_SCREEN_DELAY)
     }

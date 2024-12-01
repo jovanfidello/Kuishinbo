@@ -2,7 +2,11 @@ package com.example.kuishinbo
 
 import android.content.ContentValues
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
@@ -24,6 +28,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlinx.coroutines.*
 
 class MemoriesFragment : Fragment() {
 
@@ -36,7 +41,6 @@ class MemoriesFragment : Fragment() {
     private lateinit var placeRating: RatingBar
     private lateinit var shareOptions: LinearLayout
     private lateinit var othersButton: ImageButton
-    private lateinit var downloadButton: ImageButton
     private val db = FirebaseFirestore.getInstance()
     private val memoriesCollection = db.collection("memories")
 
@@ -60,7 +64,6 @@ class MemoriesFragment : Fragment() {
         placeRating = binding.placeRating
         shareOptions = binding.shareOptions
         othersButton = binding.othersButton
-        downloadButton = binding.downloadButton
 
         // Reverse swipe direction
         photoViewer.layoutDirection = View.LAYOUT_DIRECTION_LTR
@@ -139,7 +142,6 @@ class MemoriesFragment : Fragment() {
 
                 // Set share button listeners
                 othersButton.setOnClickListener { shareToOthers() }
-                downloadButton.setOnClickListener { downloadImage(memoryList[0].imageUrl) }
 
                 // Listen for page changes to update details
                 photoViewer.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
@@ -168,38 +170,137 @@ class MemoriesFragment : Fragment() {
     }
 
     private fun shareToOthers() {
-        // Logic for sharing to other platforms
-        val imageUrl = memoryList[photoViewer.currentItem].imageUrl
-        val shareIntent = Intent().apply {
-            action = Intent.ACTION_SEND
-            putExtra(Intent.EXTRA_STREAM, Uri.parse(imageUrl))
-            type = "image/*"
+        val memory = memoryList[photoViewer.currentItem]
+        val imageUrl = memory.imageUrl
+
+        // Check if the image URL is valid and proceed with sharing
+        if (imageUrl.isNotEmpty()) {
+            // Launch a coroutine for background work
+            CoroutineScope(Dispatchers.Main).launch {
+                try {
+                    // Perform background work in IO dispatcher (for image processing and file I/O)
+                    val bitmap = withContext(Dispatchers.IO) {
+                        getBitmapFromUrl(imageUrl)
+                    }
+
+                    // Add watermark in background
+                    val watermarkedBitmap = withContext(Dispatchers.IO) {
+                        addWatermark(bitmap)
+                    }
+
+                    // Save the image to external storage in background
+                    val savedImageUri = withContext(Dispatchers.IO) {
+                        saveImageToExternalStorage(watermarkedBitmap)
+                    }
+
+                    // Create share intent
+                    val shareIntent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_STREAM, savedImageUri)
+                        putExtra(Intent.EXTRA_TEXT, "Hey, check out my memories! #KuisinboApp\n" +
+                                "Download the app here: https://play.google.com/store/apps/details?id=com.example.kuishinbo")
+                        type = "image/*"
+                    }
+
+                    // Check if WhatsApp is installed
+                    val packageManager = requireContext().packageManager
+                    val whatsappIntent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_STREAM, savedImageUri)
+                        putExtra(Intent.EXTRA_TEXT, "Hey, check out my memories! #KuisinboApp")
+                        type = "image/*"
+                        setPackage("com.whatsapp")
+                    }
+
+                    // Check if Instagram is installed
+                    val instagramIntent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_STREAM, savedImageUri)
+                        type = "image/*"
+                        setPackage("com.instagram.android")
+                    }
+
+                    // Try sharing to WhatsApp first
+                    if (isAppInstalled("com.whatsapp", packageManager)) {
+                        startActivity(whatsappIntent)
+                    }
+                    // If Instagram is installed, try sharing to Instagram Stories
+                    else if (isAppInstalled("com.instagram.android", packageManager)) {
+                        startActivity(instagramIntent)
+                    }
+                    // If neither WhatsApp nor Instagram is installed, show the share chooser
+                    else {
+                        startActivity(Intent.createChooser(shareIntent, "Share via"))
+                    }
+
+                } catch (e: Exception) {
+                    e.printStackTrace()  // Handle any errors that occurred during background processing
+                }
+            }
         }
-        startActivity(Intent.createChooser(shareIntent, "Share via"))
     }
 
-    private fun downloadImage(imageUrl: String) {
-        // Logic to download the image to the local gallery
-        val url = Uri.parse(imageUrl)
-        val bitmap = Glide.with(requireContext())
-            .asBitmap()
-            .load(url)
-            .submit()
-            .get()
+    // Function to check if the app is installed
+    private fun isAppInstalled(packageName: String, packageManager: PackageManager): Boolean {
+        return try {
+            packageManager.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES)
+            true
+        } catch (e: PackageManager.NameNotFoundException) {
+            false
+        }
+    }
 
-        val contentValues = ContentValues().apply {
-            put(MediaStore.Images.Media.DISPLAY_NAME, "memory_image.jpg")
+    // Convert image URL to Bitmap
+    private fun getBitmapFromUrl(imageUrl: String): Bitmap {
+        // Load the image as a Bitmap (e.g., using Glide)
+        val glideBitmap = Glide.with(requireContext()).asBitmap().load(imageUrl).submit().get()
+        return glideBitmap
+    }
+
+    // Function to add watermark to the image
+    private fun addWatermark(originalBitmap: Bitmap): Bitmap {
+        val watermarkText = "Kuisinbo App"
+        val width = originalBitmap.width
+        val height = originalBitmap.height
+
+        // Create a mutable bitmap to work with
+        val watermarkedBitmap = originalBitmap.copy(Bitmap.Config.ARGB_8888, true)
+        val canvas = Canvas(watermarkedBitmap)
+        val paint = Paint().apply {
+            color = Color.WHITE
+            textSize = 80f
+            style = Paint.Style.FILL
+            isAntiAlias = true
+        }
+
+        // Set the position for the watermark (bottom right corner)
+        val xPos = width - 300f
+        val yPos = height - 100f
+        canvas.drawText(watermarkText, xPos, yPos, paint)
+
+        return watermarkedBitmap
+    }
+
+    // Save image to external storage and return its Uri
+    private fun saveImageToExternalStorage(bitmap: Bitmap): Uri {
+        val externalStorageUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+        val contentResolver = requireContext().contentResolver
+
+        val values = ContentValues().apply {
+            put(MediaStore.Images.Media.TITLE, "watermarked_image.jpg")
+            put(MediaStore.Images.Media.DISPLAY_NAME, "watermarked_image")
             put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
             put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
         }
 
-        val uri = requireActivity().contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-        uri?.let {
-            requireActivity().contentResolver.openOutputStream(it)?.use { outputStream ->
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
-            }
+        val uri = contentResolver.insert(externalStorageUri, values) ?: return Uri.EMPTY
+        contentResolver.openOutputStream(uri)?.use { outputStream ->
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
         }
+
+        return uri
     }
+
 
     override fun onResume() {
         super.onResume()

@@ -52,7 +52,7 @@ dependencies {
     annotationProcessor("com.github.bumptech.glide:compiler:4.12.0")
 
 
-
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.0")
     implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
     implementation("com.google.firebase:firebase-auth-ktx:latest_version")
     implementation("com.google.firebase:firebase-firestore")

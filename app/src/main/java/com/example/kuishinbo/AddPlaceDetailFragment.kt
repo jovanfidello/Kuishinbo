@@ -97,8 +97,6 @@ class AddPlaceDetailFragment : Fragment() {
                 mapSnapshot = bundle.getParcelable("snapshot")
 
                 // Update location information
-                locationInfoTextView.text =
-                    "Location set: ${selectedLocation?.latitude}, ${selectedLocation?.longitude}"
                 locationButton.text = "Change Location"
 
                 // Show snapshot if available

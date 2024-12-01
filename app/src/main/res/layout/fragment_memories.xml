@@ -136,16 +136,6 @@
                     android:background="@null"
                     android:scaleType="fitCenter"
                     android:contentDescription="Others" />
-
-                <ImageButton
-                    android:id="@+id/download_button"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:src="@drawable/ic_download"
-                    android:background="@null"
-                    android:scaleType="fitCenter"
-                    android:contentDescription="Download" />
-
             </LinearLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>

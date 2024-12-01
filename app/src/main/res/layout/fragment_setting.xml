@@ -96,6 +96,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:text="Notifications"
+                            android:textStyle="bold"
                             android:textColor="@color/brown"
                             android:layout_weight="1" />
 
@@ -130,6 +131,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:text="Location"
+                            android:textStyle="bold"
                             android:textColor="@color/brown"
                             android:layout_weight="1" />
 
@@ -166,6 +168,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:text="Others"
+                            android:textStyle="bold"
                             android:textColor="@color/brown"
                             android:layout_weight="1" />
                     </LinearLayout>
@@ -214,6 +217,7 @@
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:textStyle="bold"
                             android:text="Share Kuishinbo"
                             android:textColor="@color/brown"
                             android:layout_weight="1" />
@@ -243,6 +247,7 @@
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:textStyle="bold"
                             android:text="Rate Kuishinbo"
                             android:textColor="@color/brown"
                             android:layout_weight="1" />
@@ -273,6 +278,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:text="About"
+                            android:textStyle="bold"
                             android:textColor="@color/brown"
                             android:layout_weight="1" />
 

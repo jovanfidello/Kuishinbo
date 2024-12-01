@@ -3,8 +3,10 @@ package com.example.kuishinbo
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,14 +18,17 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 
 class SettingFragment : Fragment() {
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
+    private var listenerRegistration: ListenerRegistration? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -55,7 +60,7 @@ class SettingFragment : Fragment() {
 
         if (user != null) {
             // Listen for changes in the user's data in real-time
-            db.collection("users").document(user.uid)
+            listenerRegistration = db.collection("users").document(user.uid)
                 .addSnapshotListener { document, e ->
                     if (e != null) {
                         // Handle error
@@ -69,13 +74,15 @@ class SettingFragment : Fragment() {
                         val photoProfileUrl = document.getString("photoProfileUrl")
 
                         // Display the profile photo or default if null
-                        if (!photoProfileUrl.isNullOrEmpty()) {
-                            Glide.with(this)
-                                .load(photoProfileUrl)
-                                .placeholder(R.drawable.user_default_pp)
-                                .into(profilePictureView)
-                        } else {
-                            profilePictureView.setImageResource(R.drawable.user_default_pp)
+                        if (isAdded && activity != null) {
+                            if (!photoProfileUrl.isNullOrEmpty()) {
+                                Glide.with(this)
+                                    .load(photoProfileUrl)
+                                    .placeholder(R.drawable.user_default_pp)
+                                    .into(profilePictureView)
+                            } else {
+                                profilePictureView.setImageResource(R.drawable.user_default_pp)
+                            }
                         }
 
                         // Show name and country
@@ -108,6 +115,14 @@ class SettingFragment : Fragment() {
                     // Reset switch state to off if permission is not granted
                     notificationsSwitch.isChecked = false
                 }
+            } else {
+                // Handle notification toggle off
+                if (areNotificationsEnabled()) {
+                    // Show dialog to inform user to disable in settings
+                    showNotificationSettingsDialog()
+                } else {
+                    Toast.makeText(context, "Notifications are already disabled", Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
@@ -117,13 +132,13 @@ class SettingFragment : Fragment() {
         }
 
         shareCard.setOnClickListener {
-            // Example: share the app using an Intent
             val sendIntent = Intent(Intent.ACTION_SEND)
             sendIntent.type = "text/plain"
-            sendIntent.putExtra(Intent.EXTRA_SUBJECT, "Check out this app!")
-            sendIntent.putExtra(Intent.EXTRA_TEXT, "Here’s the link to the app: [App URL]")
-            startActivity(Intent.createChooser(sendIntent, "Share via"))
+            sendIntent.putExtra(Intent.EXTRA_SUBJECT, "Discover Kuishinbo: The Ultimate Snap Foodie App!")
+            sendIntent.putExtra(Intent.EXTRA_TEXT, "Calling all food lovers! 🌟 Download Kuishinbo and embark on a delicious journey. Explore new eateries, share your foodie moments, and connect with fellow enthusiasts. Get personalized recommendations, stay ahead of the latest food trends, and enjoy seamless food delivery. Don’t miss out on the foodie fun! 🍽️\n\nDownload now: https://play.google.com/store/apps/details?id=com.example.kuishinbo")
+            startActivity(Intent.createChooser(sendIntent, "Share with friends"))
         }
+
 
         rateCard.setOnClickListener {
             // Example: direct user to the app's rating page on the Google Play Store
@@ -171,9 +186,24 @@ class SettingFragment : Fragment() {
 
     // Function to request notification permission
     private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // For Android 13 and above, request notification permission directly
+            if (ContextCompat.checkSelfPermission(
+                    requireContext(),
+                    android.Manifest.permission.POST_NOTIFICATIONS
+                ) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 0)
+            }
+        } else {
+            // For older versions, notifications are enabled by default
+            Toast.makeText(context, "Notifications are enabled by default", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun showNotificationSettingsDialog() {
         AlertDialog.Builder(requireContext())
             .setTitle("Notification Permission")
-            .setMessage("This app needs notification permission to enable notifications. Do you want to allow it?")
+            .setMessage("To fully disable notifications, you need to turn them off in the app settings. Do you want to open settings now?")
             .setPositiveButton("Yes") { _, _ ->
                 val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                 intent.putExtra(Settings.EXTRA_APP_PACKAGE, requireActivity().packageName)
@@ -187,10 +217,12 @@ class SettingFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        // Update the switch status when the fragment is resumed
         val notificationsSwitch = view?.findViewById<Switch>(R.id.notifications_switch)
-        if (notificationsSwitch != null && areNotificationsEnabled()) {
-            notificationsSwitch.isChecked = true // Turn on the switch if notifications are enabled
-        }
+        notificationsSwitch?.isChecked = areNotificationsEnabled()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        listenerRegistration?.remove() // Remove listener to avoid memory leaks
     }
 }

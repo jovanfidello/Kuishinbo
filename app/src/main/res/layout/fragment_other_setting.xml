@@ -17,7 +17,7 @@
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:layout_marginTop="16dp"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="5dp"
         android:src="@drawable/back"
         android:background="@null"
         android:contentDescription="Back"
