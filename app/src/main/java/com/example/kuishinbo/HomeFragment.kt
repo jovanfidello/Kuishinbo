@@ -3,6 +3,9 @@ package com.example.kuishinbo
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -19,14 +22,12 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.card.MaterialCardView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 class HomeFragment : Fragment(), OnMapReadyCallback {
-
     private var googleMap: GoogleMap? = null
     private lateinit var infoWindow: MaterialCardView
     private lateinit var titleText: TextView
@@ -37,6 +38,7 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
+    private var hasShownLocationToast = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -99,8 +101,15 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
                     val userLocation = LatLng(location.latitude, location.longitude)
                     googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 15f))
                 } else {
-                    // Handle the case when location is null
-                    Toast.makeText(context, "Unable to get user's location", Toast.LENGTH_SHORT).show()
+                    // Display the toast only once
+                    if (!hasShownLocationToast) {
+                        Toast.makeText(
+                            context,
+                            "For Better Experience, Turn On Your Location Feature",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        hasShownLocationToast = true // Update the flag to prevent repeated toasts
+                    }
                 }
             }
         } catch (e: SecurityException) {
@@ -191,6 +200,16 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
+    // Define fetchAdditionalData outside of fetchUserPlacesMarkers
+    private fun fetchAdditionalData(selectedPlaceName: String, callback: (String?) -> Unit) {
+        // Simulate a network/database call
+        Handler(Looper.getMainLooper()).postDelayed({
+            // Simulate a response with some additional data
+            val additionalData = "Some additional data for $selectedPlaceName"
+            callback(additionalData)
+        }, 100)
+    }
+
     private fun fetchUserPlacesMarkers() {
         val user = auth.currentUser
         if (user != null) {
@@ -199,29 +218,85 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
                 .get()
                 .addOnSuccessListener { querySnapshot ->
                     for (document in querySnapshot.documents) {
-                        // Ambil location dari document sebagai Map<String, Double>
+                        // Extract location from document as Map<String, Double>
                         val locationMap = document.get("location") as? Map<String, Double>
-                        // Ambil name dari document
+                        // Get name from document
                         val name = document.getString("placeName")
 
-                        // Pastikan locationMap tidak null dan name ada
+                        // Get other relevant details
+                        val imageUrl = document.getString("imageUrl")
+                        val placeName = document.getString("placeName")
+                        val description = document.getString("description")
+                        val rating = document.getDouble("rating")?.toFloat() ?: 0f
+                        val timestamp = document.getTimestamp("timestamp")
+
+                        // Ensure locationMap is not null and name exists
                         locationMap?.let { location ->
                             val latLng = LatLng(
-                                location["latitude"] ?: 0.0,  // Ambil latitude, default ke 0.0
-                                location["longitude"] ?: 0.0   // Ambil longitude, default ke 0.0
+                                location["latitude"] ?: 0.0,
+                                location["longitude"] ?: 0.0
                             )
 
-                            // Tambahkan marker ke peta
-                            googleMap?.addMarker(
+                            // Add marker with all necessary information
+                            val marker = googleMap?.addMarker(
                                 MarkerOptions()
-                                    .position(latLng)  // Posisi marker menggunakan latLng
-                                    .title(name ?: "Unknown Place")  // Set title dengan nama tempat, atau "Unknown Place" jika null
+                                    .position(latLng)
+                                    .title(name ?: "Unknown Place")
                             )
+                            // Store additional data as a tag with the marker
+                            marker?.tag = Bundle().apply {
+                                putString("imageUrl", imageUrl ?: "")
+                                putString("placeName", placeName ?: "")
+                                putString("description", description ?: "")
+                                putFloat("rating", rating)
+                                putLong("timestamp", timestamp?.seconds ?: 0)
+                            }
+
                         }
                     }
+
+                    // Set a custom info window click listener
+                    googleMap?.setOnInfoWindowClickListener { marker ->
+                        val markerData = marker.tag as? Bundle
+
+                        // Check if markerData is null or incomplete
+                        if (markerData == null) {
+                            Log.e("HomeFragment", "Marker data is null. Cannot navigate to MemoriesFragment.")
+                            return@setOnInfoWindowClickListener // Correct here as it’s not part of a loop, it’s just returning from lambda
+                        }
+
+                        val selectedPlaceName = markerData.getString("placeName")
+                        val imageUrl = markerData.getString("imageUrl")
+
+                        // Check if the selectedPlaceName is missing
+                        if (selectedPlaceName.isNullOrEmpty()) {
+                            Log.e("HomeFragment", "Required marker data (placeName) is missing.")
+                            return@setOnInfoWindowClickListener
+                        }
+
+                        // Wait for data to be fully available before navigating
+                        fetchAdditionalData(selectedPlaceName) { additionalData ->
+                            // Create the MemoriesFragment and pass data as arguments
+                            val memoriesFragment = MemoriesFragment().apply {
+                                arguments = Bundle().apply {
+                                    putString("selectedPlaceName", selectedPlaceName)
+                                    putString("imageUrl", imageUrl ?: "") // Default to empty string if imageUrl is null
+                                    putString("additionalData", additionalData) // Pass any additional data if necessary
+                                }
+                            }
+
+                            // Perform fragment transaction with custom animations
+                            (activity as? MainActivity)?.supportFragmentManager?.beginTransaction()
+                                ?.setCustomAnimations(R.anim.fade_in, R.anim.fade_out)
+                                ?.replace(R.id.fragment_container, memoriesFragment)
+                                ?.addToBackStack(null)
+                                ?.commit()
+                        }
+                    }
+
                 }
                 .addOnFailureListener { e ->
-                    // Menampilkan toast jika terjadi kegagalan saat mengambil data
+                    // Show toast if there's an error fetching places
                     Toast.makeText(
                         context,
                         "Failed to fetch places: ${e.message}",

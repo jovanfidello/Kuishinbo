@@ -119,7 +119,7 @@ class SettingFragment : Fragment() {
                 // Handle notification toggle off
                 if (areNotificationsEnabled()) {
                     // Show dialog to inform user to disable in settings
-                    showNotificationSettingsDialog()
+                    showNotificationSettingsDialog(notificationsSwitch)
                 } else {
                     Toast.makeText(context, "Notifications are already disabled", Toast.LENGTH_SHORT).show()
                 }
@@ -200,7 +200,8 @@ class SettingFragment : Fragment() {
         }
     }
 
-    private fun showNotificationSettingsDialog() {
+    // Updated method with switch reference as a parameter
+    private fun showNotificationSettingsDialog(switch: Switch) {
         AlertDialog.Builder(requireContext())
             .setTitle("Notification Permission")
             .setMessage("To fully disable notifications, you need to turn them off in the app settings. Do you want to open settings now?")
@@ -211,6 +212,8 @@ class SettingFragment : Fragment() {
             }
             .setNegativeButton("No") { dialog, _ ->
                 dialog.dismiss()
+                // Reset switch state to ON
+                switch.isChecked = true
             }
             .show()
     }

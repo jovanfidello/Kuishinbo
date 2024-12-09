@@ -11,6 +11,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -40,6 +41,7 @@ class MemoriesFragment : Fragment() {
     private lateinit var backButton: ImageButton
     private lateinit var settingsButton: ImageButton
     private lateinit var photoViewer: ViewPager2
+    private lateinit var imageList: List<String>
     private lateinit var photoDetails: TextView
     private lateinit var placeName: TextView
     private lateinit var placeDescription: TextView
@@ -57,11 +59,14 @@ class MemoriesFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
+        // Inflate layout dengan binding
         val binding = FragmentMemoriesBinding.inflate(inflater, container, false)
-        val selectedDate = requireActivity().intent.getStringExtra("selected_date")
-        val imageUrl = requireActivity().intent.getStringExtra("image_url")
+        return binding.root
+    }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val binding = FragmentMemoriesBinding.bind(view)
         // Initialize UI components
         backButton = binding.backButton
         settingsButton = binding.settingsButton
@@ -79,8 +84,11 @@ class MemoriesFragment : Fragment() {
         // Reverse swipe direction
         photoViewer.layoutDirection = View.LAYOUT_DIRECTION_LTR
 
-        // Load memory data from Firebase
-        loadMemoryData(selectedDate, imageUrl)
+        loadMemoryData(
+            arguments?.getString("selectedDate"),
+            arguments?.getString("imageUrl"),
+            arguments?.getString("selectedPlaceName")
+        )
 
         // Toggle modal visibility when settings button is clicked
         settingsButton.setOnClickListener {
@@ -161,22 +169,18 @@ class MemoriesFragment : Fragment() {
         binding.backButton.setOnClickListener {
             requireActivity().onBackPressed()
         }
-
-        return binding.root
     }
 
-    private fun loadMemoryData(selectedDate: String?, imageUrl: String?) {
-        val query = if (selectedDate != null) {
-            // Filter memories based on selectedDate
-            memoriesCollection.orderBy("timestamp", Query.Direction.ASCENDING)
-        } else {
-            // Load all memories if no selectedDate
-            memoriesCollection.orderBy("timestamp", Query.Direction.ASCENDING)
-        }
+    private fun loadMemoryData(selectedDate: String? = null, imageUrl: String? = null, selectedPlaceName: String? = null) {
+        val passedPlaceName = arguments?.getString("selectedPlaceName") ?: selectedPlaceName
+        val passedImageUrl = arguments?.getString("imageUrl") ?: imageUrl
+
+        val query = memoriesCollection.orderBy("timestamp", Query.Direction.ASCENDING)
 
         query.get()
             .addOnSuccessListener { documents ->
                 if (documents.isEmpty) {
+                    Toast.makeText(requireContext(), "No memories found", Toast.LENGTH_SHORT).show()
                     return@addOnSuccessListener
                 }
 
@@ -194,52 +198,52 @@ class MemoriesFragment : Fragment() {
                     )
                 }
 
-                // If imageUrl is given, show the photo and details for that date
-                imageUrl?.let {
-                    val selectedMemory = memoryList.find { memory -> memory.imageUrl == it }
-                    selectedMemory?.let { memory ->
-                        updateMemoryDetails(memory)
-                        updatePinButtonUI(memory.isPinned) // Ensure button reflects the correct state
+                val filteredMemories = when {
+                    passedPlaceName != null -> {
+                        memoryList.filter { it.placeName == passedPlaceName }
                     }
+                    passedImageUrl != null -> {
+                        memoryList.filter { it.imageUrl == passedImageUrl }
+                    }
+                    selectedDate != null -> {
+                        memoryList.filter {
+                            formatDate(it.timestamp.toDate()).contains(selectedDate)
+                        }
+                    }
+                    else -> memoryList
                 }
 
-                // If selectedDate is given, find the memory matching that date
-                if (selectedDate != null) {
-                    val selectedMemory = memoryList.find { memory ->
-                        formatDate(memory.timestamp.toDate()).contains(selectedDate)
-                    }
-                    selectedMemory?.let { memory ->
-                        updateMemoryDetails(memory)
-                        val selectedPosition = memoryList.indexOf(memory)
-                        photoViewer.setCurrentItem(selectedPosition)
-                        updatePinButtonUI(memory.isPinned) // Ensure button reflects the correct state
-                    }
-                } else {
-                    // If no selectedDate, show the first photo
-                    updateMemoryDetails(memoryList[0])
-                    updatePinButtonUI(memoryList[0].isPinned) // Ensure button reflects the correct state
+                if (filteredMemories.isEmpty()) {
+                    Toast.makeText(requireContext(), "No memories found for the selected criteria", Toast.LENGTH_SHORT).show()
+                    return@addOnSuccessListener
                 }
 
-                // Set adapter with loaded data
+                // Update memoryList with filtered results
+                memoryList = filteredMemories
+
+                // Set the first memory of the filtered list as the current view
+                updateMemoryDetails(memoryList[0])
+                updatePinButtonUI(memoryList[0].isPinned)
+
                 val photoAdapter = PhotoAdapter(requireContext(), memoryList)
                 photoViewer.adapter = photoAdapter
 
-                // Set share button listeners
                 othersButton.setOnClickListener { shareToOthers() }
 
-                // Listen for page changes to update details
                 photoViewer.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
                     override fun onPageSelected(position: Int) {
                         super.onPageSelected(position)
                         updateMemoryDetails(memoryList[position])
-                        updatePinButtonUI(memoryList[position].isPinned) // Update pin button
+                        updatePinButtonUI(memoryList[position].isPinned)
                     }
                 })
             }
             .addOnFailureListener { exception ->
-                // Handle errors
+                Toast.makeText(requireContext(), "Error loading memories: ${exception.message}", Toast.LENGTH_SHORT).show()
             }
     }
+
+
 
     // Helper function to format Date into String
     fun formatDate(date: Date): String {

@@ -111,10 +111,10 @@ class ProfileFragment : Fragment() {
                         val pinList = querySnapshot.documents.map { it.getString("imageUrl") }
 
                         // Tampilkan gambar-gambar yang dipin jika belum mencapai batas 3
-                        if (pinList.size < 3) {
+                        if (pinList.size <= 3) {
                             // Loop untuk menambahkan gambar ke ImageView yang ada
                             pinList.forEachIndexed { index, imageUrl ->
-                                if (imageUrl != null && index < 3) {
+                                if (imageUrl != null && index <= 3) {
                                     // Cari ImageView sesuai dengan urutan
                                     val imageView = when (index) {
                                         0 -> pinsContain1

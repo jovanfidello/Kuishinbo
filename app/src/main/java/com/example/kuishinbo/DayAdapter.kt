@@ -71,15 +71,16 @@ class DayAdapter(private val dayList: List<DayModel>) : RecyclerView.Adapter<Day
 
                     // Navigasi ke MemoriesFragment jika ada gambar
                     holder.itemView.setOnClickListener {
-                        val fragmentTransaction = (holder.itemView.context as? AppCompatActivity)?.supportFragmentManager?.beginTransaction()
-                        fragmentTransaction?.replace(R.id.fragment_container, MemoriesFragment().apply {
+                        val memoriesFragment = MemoriesFragment().apply {
                             arguments = Bundle().apply {
-                                putString("selected_date", formattedDate)
-                                putString("image_url", imageUrl) // Pass the image URL
+                                putString("selectedDate", day.date?.let { formatDate(it) })
+                                putString("imageUrl", imageUrl)  // Make sure the imageUrl is valid
                             }
-                        })
-                        fragmentTransaction?.addToBackStack(null)
-                        fragmentTransaction?.commit()
+                        }
+                        (holder.itemView.context as? AppCompatActivity)?.supportFragmentManager?.beginTransaction()
+                            ?.replace(R.id.fragment_container, memoriesFragment)
+                            ?.addToBackStack(null)
+                            ?.commit()
                     }
                 } else {
                     holder.binding.dayImage.setImageResource(R.drawable.rounded_corner_background) // Gambar default jika tidak ada gambar
@@ -90,11 +91,7 @@ class DayAdapter(private val dayList: List<DayModel>) : RecyclerView.Adapter<Day
         }
     }
 
-
-
     override fun getItemCount(): Int = dayList.size
-
-
 
     private fun fetchImagesByDate(startOfDay: Timestamp, endOfDay: Timestamp, onResult: (String?) -> Unit) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
