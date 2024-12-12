@@ -13,6 +13,10 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
+import com.bumptech.glide.request.RequestOptions
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -128,11 +132,17 @@ class ProfileFragment : Fragment() {
                                         Glide.with(this@ProfileFragment)
                                             .load(imageUrl)
                                             .placeholder(R.drawable.empty_pin_photo)
+                                            .error(R.drawable.error_image) // Add error image
+                                            .diskCacheStrategy(DiskCacheStrategy.ALL)
+                                            .skipMemoryCache(false)
+                                            .transition(DrawableTransitionOptions.withCrossFade())
+                                            .apply(RequestOptions.bitmapTransform(RoundedCorners(20))) // Rounded corners
                                             .into(it)
+
                                         it.setOnClickListener {
                                             if (imageUrl.isNotEmpty()) {
                                                 (activity as? MainActivity)?.navigateToMemoriesFragment()
-                                            } else if (imageUrl.isNullOrEmpty()){
+                                            } else if (imageUrl.isNullOrEmpty()) {
                                                 (activity as? MainActivity)?.navigateToCalenderFragment()
                                             }
                                         }
