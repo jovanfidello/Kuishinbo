@@ -270,7 +270,7 @@ class ProfileFragment : Fragment() {
         // Clear any existing views
         dateGridLayout.removeAllViews()
 
-        for (i in 12 downTo -1) {
+        for (i in 13 downTo 0) {
             calendar.time = Date()
             calendar.add(Calendar.DAY_OF_YEAR, -i)
             val dateString = dateFormat.format(calendar.time)

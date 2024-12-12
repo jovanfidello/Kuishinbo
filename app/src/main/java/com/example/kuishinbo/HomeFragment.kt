@@ -327,10 +327,6 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
-
-
-
-
     override fun onDestroyView() {
         super.onDestroyView()
         googleMap = null
