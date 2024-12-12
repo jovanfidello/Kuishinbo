@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/dialog_background"
+    android:padding="16dp"
+    android:gravity="center">
+
+    <!-- Place Name -->
+    <TextView
+        android:id="@+id/placeNameTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="Place Name"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:paddingBottom="8dp"
+        android:textColor="@color/black" />
+
+    <!-- Button Look Memories -->
+    <TextView
+        android:id="@+id/lookMemoriesButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="Look Memories"
+        android:background="@drawable/button_background2"
+        android:paddingVertical="8dp"
+        android:paddingHorizontal="16dp"
+        android:textSize="14sp"
+        android:textColor="@color/white"
+        android:layout_marginTop="12dp" />
+
+</LinearLayout>
