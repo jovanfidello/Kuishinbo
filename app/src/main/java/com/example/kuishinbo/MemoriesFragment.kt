@@ -23,6 +23,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.cardview.widget.CardView
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
@@ -261,7 +262,7 @@ class MemoriesFragment : Fragment() {
     private fun shareToOthers() {
         val memory = memoryList[photoViewer.currentItem]
         val imageUrl = memory.imageUrl
-
+        val placeName = memory.placeName ?: "Unknown Place"
         // Check if the image URL is valid and proceed with sharing
         if (imageUrl.isNotEmpty()) {
             // Launch a coroutine for background work
@@ -274,7 +275,7 @@ class MemoriesFragment : Fragment() {
 
                     // Add watermark in background
                     val watermarkedBitmap = withContext(Dispatchers.IO) {
-                        addWatermark(bitmap)
+                        addWatermarkAndTitle(bitmap, placeName)
                     }
 
                     // Save the image to external storage in background
@@ -286,7 +287,7 @@ class MemoriesFragment : Fragment() {
                     val shareIntent = Intent().apply {
                         action = Intent.ACTION_SEND
                         putExtra(Intent.EXTRA_STREAM, savedImageUri)
-                        putExtra(Intent.EXTRA_TEXT, "Hey, check out my memories! #KuisinboApp\n" +
+                        putExtra(Intent.EXTRA_TEXT, "Hey, check out my memories! #KuishinboApp\n" +
                                 "Download the app here: https://play.google.com/store/apps/details?id=com.example.kuishinbo")
                         type = "image/*"
                     }
@@ -296,7 +297,7 @@ class MemoriesFragment : Fragment() {
                     val whatsappIntent = Intent().apply {
                         action = Intent.ACTION_SEND
                         putExtra(Intent.EXTRA_STREAM, savedImageUri)
-                        putExtra(Intent.EXTRA_TEXT, "Hey, check out my memories! #KuisinboApp")
+                        putExtra(Intent.EXTRA_TEXT, "Hey, check out my memories! #KuishinboApp")
                         type = "image/*"
                         setPackage("com.whatsapp")
                     }
@@ -346,29 +347,97 @@ class MemoriesFragment : Fragment() {
         return glideBitmap
     }
 
-    // Function to add watermark to the image
-    private fun addWatermark(originalBitmap: Bitmap): Bitmap {
-        val watermarkText = "Kuisinbo App"
+    private fun addWatermarkAndTitle(originalBitmap: Bitmap, placeName: String): Bitmap {
+        val watermarkText = "#Kuishinbo"
         val width = originalBitmap.width
         val height = originalBitmap.height
 
-        // Create a mutable bitmap to work with
-        val watermarkedBitmap = originalBitmap.copy(Bitmap.Config.ARGB_8888, true)
-        val canvas = Canvas(watermarkedBitmap)
+        // Add Instax frame around the original image
+        val framedBitmap = addInstaxFrame(originalBitmap)
+
+        val canvas = Canvas(framedBitmap)
         val paint = Paint().apply {
-            color = Color.WHITE
-            textSize = 80f
+            // Use custom font from res/font folder
+            typeface = ResourcesCompat.getFont(requireContext(), R.font.my_font) // Replace with your font name
+            color = Color.parseColor("#FF5733") // Example color
+            textSize = 200f
             style = Paint.Style.FILL
             isAntiAlias = true
         }
 
-        // Set the position for the watermark (bottom right corner)
-        val xPos = width - 300f
-        val yPos = height - 100f
-        canvas.drawText(watermarkText, xPos, yPos, paint)
+        // Draw the watermark at the top center
+        val watermarkX = (framedBitmap.width - paint.measureText(watermarkText)) / 2
+        val watermarkY = height - 20f // Position at the top
+        canvas.drawText(watermarkText, watermarkX, watermarkY, paint)
 
-        return watermarkedBitmap
+        // Prepare to draw the place name at the bottom center
+        paint.textSize = 250f // Initial size for the place name
+        val maxWidth = framedBitmap.width - 200 // Reduce width to avoid cutting off near the edges
+        val placeNameLines = breakTextToFitWidth(placeName, paint, maxWidth)
+
+        // Adjust vertical position for multi-line text
+        val lineHeight = paint.textSize + 20f // Add padding between lines
+        val startY = framedBitmap.height - 200f - ((placeNameLines.size - 1) * lineHeight) // Adjust start position dynamically
+
+        // Draw each line of the place name
+        placeNameLines.forEachIndexed { index, line ->
+            val lineX = (framedBitmap.width - paint.measureText(line)) / 2
+            val lineY = startY + (index * lineHeight)
+            canvas.drawText(line, lineX, lineY, paint)
+        }
+
+        return framedBitmap
     }
+
+    // Function to break text into multiple lines to fit within a specific width
+    private fun breakTextToFitWidth(text: String, paint: Paint, maxWidth: Int): List<String> {
+        val words = text.split(" ")
+        val lines = mutableListOf<String>()
+        var currentLine = ""
+
+        for (word in words) {
+            val testLine = if (currentLine.isEmpty()) word else "$currentLine $word"
+            if (paint.measureText(testLine) <= maxWidth) {
+                currentLine = testLine
+            } else {
+                lines.add(currentLine)
+                currentLine = word
+            }
+        }
+        if (currentLine.isNotEmpty()) {
+            lines.add(currentLine)
+        }
+
+        return lines
+    }
+
+    // Function to add Instax-style frame around the image
+    private fun addInstaxFrame(originalBitmap: Bitmap): Bitmap {
+        val frameColor = Color.WHITE
+        val topPadding = 130 // Padding at the top of the frame
+        val bottomPadding = 600 // Larger padding at the bottom for a more authentic Instax look
+
+        val width = originalBitmap.width + 2 * 100 // Horizontal padding around the image
+        val height = originalBitmap.height + topPadding + bottomPadding // Vertical padding for top and bottom
+
+        // Create a new bitmap with extra space for the frame
+        val framedBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(framedBitmap)
+
+        // Draw the frame (white background)
+        canvas.drawColor(frameColor)
+
+        // Calculate the position to draw the original image inside the frame
+        val left = 100f  // Horizontal padding
+        val top = topPadding.toFloat()  // Vertical padding at the top
+
+        // Draw the original image inside the frame
+        canvas.drawBitmap(originalBitmap, left, top, null)
+
+        return framedBitmap
+    }
+
+
 
     // Save image to external storage and return its Uri
     private fun saveImageToExternalStorage(bitmap: Bitmap): Uri {

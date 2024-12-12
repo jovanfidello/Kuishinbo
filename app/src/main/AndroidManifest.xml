@@ -60,7 +60,8 @@
                 android:name="androidx.core.content.pm.FileProvider_paths"
                 android:resource="@xml/file_paths" />
         </provider>
-
+        <receiver android:name=".DailyNotificationReceiver" />
+        <receiver android:name=".InactivityNotificationWorker" />
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyAMUvo0fW6qQFewkdKzjqOb0u7BQA_9PLk" />

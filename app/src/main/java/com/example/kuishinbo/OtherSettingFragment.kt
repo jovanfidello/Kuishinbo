@@ -23,6 +23,7 @@ import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
 
+
 class OtherSettingFragment : Fragment() {
 
     private lateinit var auth: FirebaseAuth

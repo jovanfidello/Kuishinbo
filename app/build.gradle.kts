@@ -49,9 +49,7 @@ dependencies {
 
     // Glide (untuk memuat gambar)
     implementation("com.github.bumptech.glide:glide:4.12.0")
-    implementation(libs.androidx.ui.text.android)
     annotationProcessor("com.github.bumptech.glide:compiler:4.12.0")
-
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.0")
     implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
@@ -94,5 +92,9 @@ dependencies {
     implementation("com.google.android.material:material:1.9.0")
     implementation("com.google.android.libraries.places:places:2.5.0")
 
-    implementation ("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.gridlayout:gridlayout:1.0.0")
+    implementation("androidx.cardview:cardview:1.0.0")
+
+    implementation("androidx.work:work-runtime-ktx:2.8.1")
 }

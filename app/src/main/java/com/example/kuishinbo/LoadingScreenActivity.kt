@@ -9,6 +9,7 @@ import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import com.airbnb.lottie.LottieAnimationView
 
+
 class LoadingScreenActivity : AppCompatActivity() {
     private lateinit var lottieLoader: LottieAnimationView
 
