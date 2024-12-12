@@ -3,6 +3,7 @@ package com.example.kuishinbo
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.media.ExifInterface
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -63,7 +64,8 @@ class PreviewFragment : Fragment() {
             val imgFile = File(filePath)
             if (imgFile.exists()) {
                 val bitmap = BitmapFactory.decodeFile(imgFile.absolutePath)
-                imageView.setImageBitmap(bitmap)
+                val rotatedBitmap = rotateImageIfRequired(bitmap, imgFile.absolutePath)
+                imageView.setImageBitmap(rotatedBitmap)
             }
         }
 
@@ -83,6 +85,24 @@ class PreviewFragment : Fragment() {
         retakeButton.setOnClickListener {
             parentFragmentManager.popBackStack()
         }
+    }
+
+    private fun rotateImageIfRequired(bitmap: Bitmap, filePath: String): Bitmap {
+        val exif = ExifInterface(filePath)
+        val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+
+        return when (orientation) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> rotateBitmap(bitmap, 90f)
+            ExifInterface.ORIENTATION_ROTATE_180 -> rotateBitmap(bitmap, 180f)
+            ExifInterface.ORIENTATION_ROTATE_270 -> rotateBitmap(bitmap, 270f)
+            else -> bitmap
+        }
+    }
+
+    private fun rotateBitmap(bitmap: Bitmap, degrees: Float): Bitmap {
+        val matrix = android.graphics.Matrix()
+        matrix.postRotate(degrees)
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
 
     override fun onResume() {

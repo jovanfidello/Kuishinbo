@@ -230,7 +230,9 @@ class CameraFragment : Fragment() {
                                 else -> ImageCapture.FLASH_MODE_OFF
                             }
                         )
+                        .setTargetRotation(previewView.display.rotation) // Pastikan orientasi mengikuti layar
                         .build()
+
 
                     val cameraSelector = if (isCameraFront) {
                         CameraSelector.DEFAULT_FRONT_CAMERA
