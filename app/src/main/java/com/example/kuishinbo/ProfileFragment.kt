@@ -29,7 +29,6 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-
 class ProfileFragment : Fragment() {
 
     private lateinit var auth: FirebaseAuth
@@ -57,6 +56,12 @@ class ProfileFragment : Fragment() {
         val pinsContain1 = view.findViewById<ImageView>(R.id.pins_contain1)
         val pinsContain2 = view.findViewById<ImageView>(R.id.pins_contain2)
         val pinsContain3 = view.findViewById<ImageView>(R.id.pins_contain3)
+        val pinDateMonthDay1 = view.findViewById<TextView>(R.id.pin_date_month_day1)
+        val pinDateYear1 = view.findViewById<TextView>(R.id.pin_date_year1)
+        val pinDateMonthDay2 = view.findViewById<TextView>(R.id.pin_date_month_day2)
+        val pinDateYear2 = view.findViewById<TextView>(R.id.pin_date_year2)
+        val pinDateMonthDay3 = view.findViewById<TextView>(R.id.pin_date_month_day3)
+        val pinDateYear3 = view.findViewById<TextView>(R.id.pin_date_year3)
 
         // Retrieve user information
         if (user != null) {
@@ -109,22 +114,21 @@ class ProfileFragment : Fragment() {
                 }
 
             // Retrieve pins photo
-            // Ambil koleksi pins milik user dan filter berdasarkan isPinned == true
             db.collection("memories")
                 .whereEqualTo("userId", user.uid)
                 .whereEqualTo("isPinned", true)
                 .get()
                 .addOnSuccessListener { querySnapshot ->
-                    // Cek apakah ada dokumen dalam koleksi pins
                     if (!querySnapshot.isEmpty) {
                         val pinList = querySnapshot.documents.map { it.getString("imageUrl") }
+                        val pinDates = querySnapshot.documents.map { it.getTimestamp("timestamp") }
 
-                        // Tampilkan gambar-gambar yang dipin jika belum mencapai batas 3
                         if (pinList.size <= 3) {
-                            // Loop untuk menambahkan gambar ke ImageView yang ada
                             pinList.forEachIndexed { index, imageUrl ->
                                 if (imageUrl != null && index <= 3) {
-                                    // Cari ImageView sesuai dengan urutan
+                                    val timestamp = pinDates.getOrNull(index)?.toDate()
+                                    val dateFormatted = timestamp?.let { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(it) }
+
                                     val imageView = when (index) {
                                         0 -> pinsContain1
                                         1 -> pinsContain2
@@ -132,17 +136,32 @@ class ProfileFragment : Fragment() {
                                         else -> null
                                     }
 
-                                    // Set gambar ke ImageView yang ditemukan
                                     imageView?.let {
                                         Glide.with(this@ProfileFragment)
                                             .load(imageUrl)
                                             .placeholder(R.drawable.empty_pin_photo)
-                                            .error(R.drawable.error_image) // Add error image
+                                            .error(R.drawable.error_image)
                                             .diskCacheStrategy(DiskCacheStrategy.ALL)
                                             .skipMemoryCache(false)
                                             .transition(DrawableTransitionOptions.withCrossFade())
-                                            .apply(RequestOptions.bitmapTransform(RoundedCorners(20))) // Rounded corners
+                                            .apply(RequestOptions.bitmapTransform(RoundedCorners(20)))
                                             .into(it)
+
+                                        // Set the date text for the pin
+                                        when (index) {
+                                            0 -> {
+                                                pinDateMonthDay1.text = dateFormatted?.substring(0, 6)
+                                                pinDateYear1.text = dateFormatted?.substring(7)
+                                            }
+                                            1 -> {
+                                                pinDateMonthDay2.text = dateFormatted?.substring(0, 6)
+                                                pinDateYear2.text = dateFormatted?.substring(7)
+                                            }
+                                            2 -> {
+                                                pinDateMonthDay3.text = dateFormatted?.substring(0, 6)
+                                                pinDateYear3.text = dateFormatted?.substring(7)
+                                            }
+                                        }
 
                                         it.setOnClickListener {
                                             val memoriesFragment = MemoriesFragment().apply {
@@ -160,7 +179,6 @@ class ProfileFragment : Fragment() {
                                 }
                             }
                         } else {
-                            // Tampilkan pesan atau placeholder jika sudah ada 3 gambar yang dipin
                             val maxPinImageView = ImageView(requireContext()).apply {
                                 layoutParams = LinearLayout.LayoutParams(0, 150).apply {
                                     weight = 1f
@@ -173,7 +191,6 @@ class ProfileFragment : Fragment() {
                             pinsContainer.addView(maxPinImageView)
                         }
                     } else {
-                        // Tampilkan placeholder jika tidak ada foto yang dipin
                         val emptyPinImageView = ImageView(requireContext()).apply {
                             layoutParams = LinearLayout.LayoutParams(0, 150).apply {
                                 weight = 1f
@@ -186,9 +203,9 @@ class ProfileFragment : Fragment() {
                     }
                 }
                 .addOnFailureListener { e ->
-                    // Tangani kegagalan
                     Toast.makeText(requireContext(), "Failed to load pinned images.", Toast.LENGTH_SHORT).show()
                 }
+
 
             // Back button functionality
             backButton.setOnClickListener {
@@ -260,8 +277,8 @@ class ProfileFragment : Fragment() {
 
             val container = FrameLayout(requireContext()).apply {
                 layoutParams = GridLayout.LayoutParams().apply {
-                    width = 150
-                    height = 150
+                    width = 140
+                    height = 170
                     setMargins(8, 8, 8, 8)
                 }
 
@@ -284,7 +301,7 @@ class ProfileFragment : Fragment() {
                     Gravity.CENTER
                 )
                 text = SimpleDateFormat("dd", Locale.getDefault()).format(calendar.time)
-                textSize = 16f
+                textSize = 14f
                 setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
                 gravity = Gravity.CENTER
             }
@@ -294,7 +311,7 @@ class ProfileFragment : Fragment() {
                     .load(imageUrlsByDate[dateString])
                     .placeholder(R.drawable.empty_pin_photo)
                     .error(R.drawable.error_image)
-                    .apply(RequestOptions.bitmapTransform(RoundedCorners(150)))
+                    .apply(RequestOptions.bitmapTransform(RoundedCorners(30)))
                     .into(imageView)
 
                 // Add click listener for images with URLs
