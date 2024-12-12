@@ -1,16 +1,20 @@
 package com.example.kuishinbo
 
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.GridLayout
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
@@ -30,6 +34,7 @@ class ProfileFragment : Fragment() {
 
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
+    private var imageUrlsByDate = mutableMapOf<String, String>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -140,11 +145,16 @@ class ProfileFragment : Fragment() {
                                             .into(it)
 
                                         it.setOnClickListener {
-                                            if (imageUrl.isNotEmpty()) {
-                                                (activity as? MainActivity)?.navigateToMemoriesFragment()
-                                            } else if (imageUrl.isNullOrEmpty()) {
-                                                (activity as? MainActivity)?.navigateToCalenderFragment()
+                                            val memoriesFragment = MemoriesFragment().apply {
+                                                arguments = Bundle().apply {
+                                                    putString("selectedDate", null) // Pinned photo tidak terkait tanggal
+                                                    putString("imageUrl", imageUrl)
+                                                }
                                             }
+                                            (activity as? AppCompatActivity)?.supportFragmentManager?.beginTransaction()
+                                                ?.replace(R.id.fragment_container, memoriesFragment)
+                                                ?.addToBackStack(null)
+                                                ?.commit()
                                         }
                                     }
                                 }
@@ -180,106 +190,133 @@ class ProfileFragment : Fragment() {
                     Toast.makeText(requireContext(), "Failed to load pinned images.", Toast.LENGTH_SHORT).show()
                 }
 
-            // Retrieve last 14 day memories
-            // Get the current date and subtract 14 days
-            val calendar = Calendar.getInstance()
-            calendar.add(Calendar.DAY_OF_YEAR, -14)
-            val fourteenDaysAgo = calendar.time
-
-// Retrieve the last 14 days of memories
-            db.collection("memories")
-                .whereEqualTo("userId", user.uid) // Assuming userId is the field used to associate the memories with the user
-                .whereGreaterThanOrEqualTo("timestamp", fourteenDaysAgo) // Filter based on timestamp
-                .get()
-                .addOnSuccessListener { querySnapshot ->
-                    val imageUrls = mutableListOf<String>()
-
-                    // Iterate over the documents and collect the image URLs
-                    for (document in querySnapshot.documents) {
-                        val imageUrl = document.getString("imageUrl")
-                        if (!imageUrl.isNullOrEmpty()) {
-                            imageUrls.add(imageUrl)
-                        }
-                    }
-
-                    // Add images to GridLayout
-                    displayImagesInGridLayout(imageUrls)
-                }
-                .addOnFailureListener { e ->
-                    Toast.makeText(requireContext(), "Failed to load memories.", Toast.LENGTH_SHORT).show()
-                }
-        }
-
-        // Back button functionality
-        backButton.setOnClickListener {
-            (activity as? MainActivity)?.navigateToHomeFragment()
-        }
-
-        // Settings button functionality
-        settingsButton.setOnClickListener {
-            (activity as? MainActivity)?.navigateToSettingFragment()
-        }
-
-        // Memories button functionality
-        memoriesButton.setOnClickListener {
-            (activity as? MainActivity)?.navigateToCalenderFragment()
-        }
-
-        val dateGridLayout = view.findViewById<GridLayout>(R.id.date_grid_layout)
-
-        // Format tanggal
-        val dateFormat = SimpleDateFormat("dd", Locale.getDefault())
-        val calendar = Calendar.getInstance()
-
-        // Loop untuk menambahkan 14 hari terakhir
-        for (i in 13 downTo 0) {
-            // Hitung tanggal
-            calendar.time = Date()
-            calendar.add(Calendar.DAY_OF_YEAR, -i)
-            val dateText = dateFormat.format(calendar.time)
-
-            // Buat TextView untuk tanggal
-            val dateTextView = TextView(requireContext()).apply {
-                layoutParams = GridLayout.LayoutParams().apply {
-                    width = 120 // Lebar TextView
-                    height = 120 // Tinggi TextView
-                    setMargins(8, 8, 8, 8) // Margin antar elemen
-                }
-                gravity = android.view.Gravity.CENTER
-                background = requireContext().getDrawable(R.drawable.border_background)
-                text = dateText
-                textSize = 14f
+            // Back button functionality
+            backButton.setOnClickListener {
+                (activity as? MainActivity)?.navigateToHomeFragment()
             }
 
-            // Tambahkan TextView ke GridLayout
-            dateGridLayout.addView(dateTextView)
+            // Settings button functionality
+            settingsButton.setOnClickListener {
+                (activity as? MainActivity)?.navigateToSettingFragment()
+            }
+
+            // Memories button functionality
+            memoriesButton.setOnClickListener {
+                (activity as? MainActivity)?.navigateToCalenderFragment()
+            }
+
+            // Retrieve last 14 day memories
+            val user = auth.currentUser
+            val dateGridLayout = view.findViewById<GridLayout>(R.id.date_grid_layout)
+
+            // Retrieve last 14 days memories
+            if (user != null) {
+                fetchLast14DaysMemories(user.uid) {
+                    displayImagesInGridLayout(dateGridLayout)
+                }
+            }
         }
 
         return view
     }
 
-    private fun displayImagesInGridLayout(imageUrls: List<String>) {
-        val dateGridLayout = view?.findViewById<GridLayout>(R.id.date_grid_layout)
-        imageUrls.forEach { imageUrl ->
-            // Create an ImageView for each image URL
-            val imageView = ImageView(requireContext()).apply {
-                layoutParams = GridLayout.LayoutParams().apply {
-                    width = 120 // Set width as required
-                    height = 120 // Set height as required
-                    setMargins(8, 8, 8, 8) // Margin between images
-                }
-                setImageResource(R.drawable.empty_pin_photo) // Default image
-                Glide.with(this@ProfileFragment)
-                    .load(imageUrl)
-                    .placeholder(R.drawable.empty_pin_photo)
-                    .into(this) // Load image into the ImageView
-            }
+    private fun fetchLast14DaysMemories(userId: String, onComplete: () -> Unit) {
+        val calendar = Calendar.getInstance()
+        calendar.add(Calendar.DAY_OF_YEAR, -14)
+        val fourteenDaysAgo = calendar.time
 
-            // Add the ImageView to the GridLayout
-            dateGridLayout?.addView(imageView)
-        }
+        db.collection("memories")
+            .whereEqualTo("userId", userId)
+            .whereGreaterThanOrEqualTo("timestamp", fourteenDaysAgo)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                for (document in querySnapshot.documents) {
+                    val timestamp = document.getTimestamp("timestamp")?.toDate()
+                    val imageUrl = document.getString("imageUrl")
+
+                    if (timestamp != null && !imageUrl.isNullOrEmpty()) {
+                        val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(timestamp)
+                        imageUrlsByDate[date] = imageUrl
+                    }
+                }
+                onComplete()
+            }
+            .addOnFailureListener {
+                Toast.makeText(requireContext(), "Failed to load memories.", Toast.LENGTH_SHORT).show()
+            }
     }
 
+    private fun displayImagesInGridLayout(dateGridLayout: GridLayout) {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val calendar = Calendar.getInstance()
+
+        // Clear any existing views
+        dateGridLayout.removeAllViews()
+
+        for (i in 12 downTo -1) {
+            calendar.time = Date()
+            calendar.add(Calendar.DAY_OF_YEAR, -i)
+            val dateString = dateFormat.format(calendar.time)
+
+            val container = FrameLayout(requireContext()).apply {
+                layoutParams = GridLayout.LayoutParams().apply {
+                    width = 150
+                    height = 150
+                    setMargins(8, 8, 8, 8)
+                }
+
+                background = ContextCompat.getDrawable(requireContext(), R.drawable.rounded_background)
+                background = ContextCompat.getDrawable(requireContext(), R.drawable.border_colored)
+            }
+
+            val imageView = ImageView(requireContext()).apply {
+                layoutParams = FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT
+                )
+                scaleType = ImageView.ScaleType.CENTER_CROP
+            }
+
+            val textView = TextView(requireContext()).apply {
+                layoutParams = FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.WRAP_CONTENT,
+                    FrameLayout.LayoutParams.WRAP_CONTENT,
+                    Gravity.CENTER
+                )
+                text = SimpleDateFormat("dd", Locale.getDefault()).format(calendar.time)
+                textSize = 16f
+                setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
+                gravity = Gravity.CENTER
+            }
+
+            if (imageUrlsByDate.containsKey(dateString)) {
+                Glide.with(this)
+                    .load(imageUrlsByDate[dateString])
+                    .placeholder(R.drawable.empty_pin_photo)
+                    .error(R.drawable.error_image)
+                    .apply(RequestOptions.bitmapTransform(RoundedCorners(150)))
+                    .into(imageView)
+
+                // Add click listener for images with URLs
+                imageView.setOnClickListener {
+                    val memoriesFragment = MemoriesFragment().apply {
+                        arguments = Bundle().apply {
+                            putString("selectedDate", dateString)
+                            putString("imageUrl", imageUrlsByDate[dateString])
+                        }
+                    }
+                    (activity as? AppCompatActivity)?.supportFragmentManager?.beginTransaction()
+                        ?.replace(R.id.fragment_container, memoriesFragment)
+                        ?.addToBackStack(null)
+                        ?.commit()
+                }
+            }
+
+            container.addView(imageView)
+            container.addView(textView)
+            dateGridLayout.addView(container)
+        }
+    }
 
 
     // Function to get time ago in human-readable format

@@ -49,6 +49,7 @@ dependencies {
 
     // Glide (untuk memuat gambar)
     implementation("com.github.bumptech.glide:glide:4.12.0")
+    implementation(libs.androidx.ui.text.android)
     annotationProcessor("com.github.bumptech.glide:compiler:4.12.0")
 
 

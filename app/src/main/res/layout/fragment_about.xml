@@ -24,16 +24,139 @@
         android:scaleType="fitCenter"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- Title -->
     <TextView
         android:id="@+id/others_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="About"
-        android:textSize="16sp"
-        android:layout_marginTop="4dp"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="16dp"
         android:textColor="@color/black"
         app:layout_constraintTop_toTopOf="@id/back_button"
-        app:layout_constraintStart_toEndOf="@id/back_button"
-        android:layout_marginStart="4dp" />
+        app:layout_constraintStart_toEndOf="@id/back_button" />
+
+    <!-- Photos with Names -->
+    <GridLayout
+        android:id="@+id/photo_grid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:rowCount="2"
+        android:columnCount="2"
+        android:alignmentMode="alignMargins"
+        android:useDefaultMargins="true"
+        app:layout_constraintTop_toBottomOf="@id/back_button"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Photo 1 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_gravity="center"
+            android:layout_weight="1">
+
+            <ImageView
+                android:id="@+id/photo_1"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:src="@drawable/jovan"
+                android:scaleType="centerCrop"
+                android:background="@drawable/rounded_image_background" />
+
+            <TextView
+                android:id="@+id/name_1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Jovan Fidello"
+                android:textSize="16sp"
+                android:gravity="center" />
+        </LinearLayout>
+
+        <!-- Photo 2 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_gravity="center"
+            android:layout_weight="1">
+
+            <ImageView
+                android:id="@+id/photo_2"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:src="@drawable/reynaldo"
+                android:scaleType="centerCrop"
+                android:background="@drawable/rounded_image_background" />
+
+            <TextView
+                android:id="@+id/name_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Reynaldo"
+                android:textSize="16sp"
+                android:gravity="center" />
+        </LinearLayout>
+
+        <!-- Photo 3 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_gravity="center"
+            android:layout_weight="1">
+
+            <ImageView
+                android:id="@+id/photo_3"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:src="@drawable/stefan"
+                android:scaleType="centerCrop"
+                android:background="@drawable/rounded_image_background" />
+
+            <TextView
+                android:id="@+id/name_3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Gerard Stefan Gani"
+                android:textSize="16sp"
+                android:gravity="center" />
+        </LinearLayout>
+
+        <!-- Photo 4 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_gravity="center"
+            android:layout_weight="1">
+
+            <ImageView
+                android:id="@+id/photo_4"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:src="@drawable/friedrich"
+                android:scaleType="centerCrop"
+                android:background="@drawable/rounded_image_background" />
+
+            <TextView
+                android:id="@+id/name_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Friedrich Litani Santoso"
+                android:textSize="16sp"
+                android:gravity="center" />
+        </LinearLayout>
+
+    </GridLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
