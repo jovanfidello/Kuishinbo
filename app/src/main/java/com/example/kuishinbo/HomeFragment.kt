@@ -2,13 +2,17 @@ package com.example.kuishinbo
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -22,6 +26,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.card.MaterialCardView
 import com.google.firebase.auth.FirebaseAuth
@@ -219,85 +224,34 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
                 .get()
                 .addOnSuccessListener { querySnapshot ->
                     for (document in querySnapshot.documents) {
-                        // Extract location from document as Map<String, Double>
                         val locationMap = document.get("location") as? Map<String, Double>
-                        // Get name from document
                         val name = document.getString("placeName")
+                        val imageUrl = document.getString("imageUrl") // Fetch imageUrl
 
-                        // Get other relevant details
-                        val imageUrl = document.getString("imageUrl")
-                        val placeName = document.getString("placeName")
-                        val description = document.getString("description")
-                        val rating = document.getDouble("rating")?.toFloat() ?: 0f
-                        val timestamp = document.getTimestamp("timestamp")
-
-                        // Ensure locationMap is not null and name exists
                         locationMap?.let { location ->
                             val latLng = LatLng(
                                 location["latitude"] ?: 0.0,
                                 location["longitude"] ?: 0.0
                             )
-
-                            // Add marker with all necessary information
                             val marker = googleMap?.addMarker(
                                 MarkerOptions()
                                     .position(latLng)
                                     .title(name ?: "Unknown Place")
                             )
-                            // Store additional data as a tag with the marker
                             marker?.tag = Bundle().apply {
+                                putString("placeName", name ?: "")
                                 putString("imageUrl", imageUrl ?: "")
-                                putString("placeName", placeName ?: "")
-                                putString("description", description ?: "")
-                                putFloat("rating", rating)
-                                putLong("timestamp", timestamp?.seconds ?: 0)
                             }
-
                         }
                     }
 
-                    // Set a custom info window click listener
-                    googleMap?.setOnInfoWindowClickListener { marker ->
-                        val markerData = marker.tag as? Bundle
-
-                        // Check if markerData is null or incomplete
-                        if (markerData == null) {
-                            Log.e("HomeFragment", "Marker data is null. Cannot navigate to MemoriesFragment.")
-                            return@setOnInfoWindowClickListener // Correct here as it’s not part of a loop, it’s just returning from lambda
-                        }
-
-                        val selectedPlaceName = markerData.getString("placeName")
-                        val imageUrl = markerData.getString("imageUrl")
-
-                        // Check if the selectedPlaceName is missing
-                        if (selectedPlaceName.isNullOrEmpty()) {
-                            Log.e("HomeFragment", "Required marker data (placeName) is missing.")
-                            return@setOnInfoWindowClickListener
-                        }
-
-                        // Wait for data to be fully available before navigating
-                        fetchAdditionalData(selectedPlaceName) { additionalData ->
-                            // Create the MemoriesFragment and pass data as arguments
-                            val memoriesFragment = MemoriesFragment().apply {
-                                arguments = Bundle().apply {
-                                    putString("selectedPlaceName", selectedPlaceName)
-                                    putString("imageUrl", imageUrl ?: "") // Default to empty string if imageUrl is null
-                                    putString("additionalData", additionalData) // Pass any additional data if necessary
-                                }
-                            }
-
-                            // Perform fragment transaction with custom animations
-                            (activity as? MainActivity)?.supportFragmentManager?.beginTransaction()
-                                ?.setCustomAnimations(R.anim.fade_in, R.anim.fade_out)
-                                ?.replace(R.id.fragment_container, memoriesFragment)
-                                ?.addToBackStack(null)
-                                ?.commit()
-                        }
+                    // Set marker click listener
+                    googleMap?.setOnMarkerClickListener { marker ->
+                        showLocationPhoto(marker)
+                        true
                     }
-
                 }
                 .addOnFailureListener { e ->
-                    // Show toast if there's an error fetching places
                     Toast.makeText(
                         context,
                         "Failed to fetch places: ${e.message}",
@@ -306,6 +260,76 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
                 }
         }
     }
+
+
+    private fun showLocationPhoto(marker: Marker) {
+        // Inflate dialog layout
+        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_marker_info, null)
+        val dialog = android.app.AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        dialog.window?.apply {
+            addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            setDimAmount(0.5f) // Sesuaikan intensitas redup
+        }
+        dialog.window?.attributes?.windowAnimations = R.style.DialogAnimation
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.8).toInt(), // 80% of screen width
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+
+        // Set data in the dialog
+        val placeNameTextView = dialogView.findViewById<TextView>(R.id.placeNameTextView)
+        val lookMemoriesButton = dialogView.findViewById<TextView>(R.id.lookMemoriesButton)
+
+        placeNameTextView.text = marker.title ?: "Unknown Place"
+        lookMemoriesButton.setOnClickListener {
+            // Navigate to MemoriesFragment
+            val memoriesFragment = MemoriesFragment().apply {
+                arguments = Bundle().apply {
+                    putString("selectedPlaceName", marker.title)
+                }
+            }
+            (activity as? MainActivity)?.supportFragmentManager?.beginTransaction()
+                ?.replace(R.id.fragment_container, memoriesFragment)
+                ?.addToBackStack(null)
+                ?.commit()
+
+            dialog.dismiss()
+        }
+
+        // Show dialog
+        dialog.show()
+
+        // Get screen position of marker
+        val markerScreenPosition = googleMap?.projection?.toScreenLocation(marker.position)
+        val dialogWindow = dialog.window
+
+        if (markerScreenPosition != null && dialogWindow != null) {
+            // Set dialog starting position (center horizontally, near the marker vertically)
+            val dialogViewParent = dialogView.parent as ViewGroup
+            val startX = markerScreenPosition.x.toFloat()
+            val startY = markerScreenPosition.y.toFloat()
+
+            dialogViewParent.translationX = startX - (dialogViewParent.width / 2)
+            dialogViewParent.translationY = startY - dialogViewParent.height
+
+            // Animate to final position (center bottom)
+            dialogViewParent.animate()
+                .translationX(0f)
+                .translationY(0f)
+                .setInterpolator(android.view.animation.DecelerateInterpolator())
+                .setDuration(500)
+                .start()
+        }
+    }
+
+
+
+
 
     override fun onDestroyView() {
         super.onDestroyView()
