@@ -16,6 +16,7 @@ import android.widget.RatingBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.addCallback
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import com.google.android.gms.maps.model.LatLng
@@ -112,6 +113,9 @@ class AddPlaceDetailFragment : Fragment() {
                 if (validateInputs() && mapSnapshot != null) {
                     uploadPhotoToStorageAndSaveData()
                 }
+            }
+            requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
+                showDiscardChangesDialog()
             }
         }
     }

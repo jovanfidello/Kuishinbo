@@ -42,7 +42,6 @@ class MemoriesFragment : Fragment() {
     private lateinit var backButton: ImageButton
     private lateinit var settingsButton: ImageButton
     private lateinit var photoViewer: ViewPager2
-    private lateinit var imageList: List<String>
     private lateinit var photoDetails: TextView
     private lateinit var placeName: TextView
     private lateinit var placeDescription: TextView
@@ -55,7 +54,7 @@ class MemoriesFragment : Fragment() {
     private val db = FirebaseFirestore.getInstance()
     private val memoriesCollection = db.collection("memories")
 
-    private lateinit var memoryList: List<MemoryData> // List to hold the memory data
+    private lateinit var memoryList: List<MemoryData>
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,

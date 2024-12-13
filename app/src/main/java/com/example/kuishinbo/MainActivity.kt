@@ -68,11 +68,6 @@ class MainActivity : AppCompatActivity() {
                     .addToBackStack(null) // Menambahkannya ke back stack
                     .commit()
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                    requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101)
-                }
-            }
 
             true
         }
@@ -212,8 +207,8 @@ class MainActivity : AppCompatActivity() {
         )
 
         val calendar = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 1)
-            set(Calendar.MINUTE, 19)
+            set(Calendar.HOUR_OF_DAY, 12)
+            set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
             if (timeInMillis < System.currentTimeMillis()) {
                 add(Calendar.DAY_OF_YEAR, 1) // Jika waktu telah berlalu, set untuk besok
