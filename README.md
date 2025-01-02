@@ -1,12 +1,10 @@
-# Kuishinbo
+# Kuishinbo - Kelompok 5
 
 ## LINK VIDEO DEMO
 https://drive.google.com/file/d/145zFmlSdlWiKxmk7PNjxG2Esnmepuenw/view?usp=sharing
 
-Kuishinbo - Kelompok 5
 
 1. Deskripsi Aplikasi
-
 Kuishinbo adalah aplikasi jurnal kuliner yang dirancang untuk membantu Anda mendokumentasikan dan merayakan setiap perjalanan rasa. Dengan Kuishinbo, Anda bisa menangkap momen terbaik dari setiap hidangan, memberikan ulasan berbintang, dan menambahkan cerita singkat tentang pengalaman Anda. Tak perlu khawatir mencari nama tempat, karena aplikasi ini secara otomatis mendeteksi lokasi menggunakan GPS, memastikan setiap kenangan kuliner tersimpan dengan sempurna. Sebagai jurnal pribadi, Kuishinbo memungkinkan Anda melihat kembali momen kuliner sebelumnya melalui fitur Kalendar Memori. Di Profil Pribadi, Anda dapat menyematkan foto favorit, menciptakan koleksi momen kuliner yang paling berkesan. Meski aplikasi ini dirancang untuk menjadi ruang pribadi Anda, Kuishinbo memungkinkan Anda membagikan cerita dan kenangan ini ke luar aplikasi dengan mudah, seperti ke media sosial atau platform lainnya. Dengan desain yang elegan dan navigasi yang simpel, Kuishinbo menjadikan dokumentasi kuliner sebuah pengalaman yang menyenangkan dan bermakna.
 
 2. Anggota Kelompok 
