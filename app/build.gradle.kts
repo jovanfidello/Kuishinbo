@@ -97,4 +97,7 @@ dependencies {
     implementation("androidx.cardview:cardview:1.0.0")
 
     implementation("androidx.work:work-runtime-ktx:2.8.1")
+    implementation("com.facebook.android:facebook-login:12.3.0")
+    implementation("com.facebook.android:facebook-android-sdk:[8,9)")
+    implementation("com.facebook.android:facebook-share:4.42.0")
 }

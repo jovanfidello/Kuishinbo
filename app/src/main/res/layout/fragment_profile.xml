@@ -141,7 +141,7 @@
                     android:id="@+id/pin_date_month_day1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Dec-10"
+                    android:text=""
                     android:textColor="@android:color/white"
                     android:textStyle="bold"
                     android:padding="4dp" />
@@ -150,7 +150,7 @@
                     android:id="@+id/pin_date_year1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="2024"
+                    android:text=""
                     android:textColor="@android:color/white"
                     android:textStyle="bold"
                     android:padding="4dp" />
@@ -189,7 +189,7 @@
                     android:id="@+id/pin_date_month_day2"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Dec-11"
+                    android:text=""
                     android:textColor="@android:color/white"
                     android:textStyle="bold"
                     android:padding="4dp" />
@@ -198,7 +198,7 @@
                     android:id="@+id/pin_date_year2"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="2024"
+                    android:text=""
                     android:textColor="@android:color/white"
                     android:textStyle="bold"
                     android:padding="4dp" />
@@ -237,7 +237,7 @@
                     android:id="@+id/pin_date_month_day3"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Dec-12"
+                    android:text=""
                     android:textColor="@android:color/white"
                     android:textStyle="bold"
                     android:padding="4dp" />
@@ -246,7 +246,7 @@
                     android:id="@+id/pin_date_year3"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="2024"
+                    android:text=""
                     android:textColor="@android:color/white"
                     android:textStyle="bold"
                     android:padding="4dp" />

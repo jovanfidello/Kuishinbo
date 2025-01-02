@@ -18,5 +18,5 @@
     <color name="highlight_color">#FFA726</color>
     <color name="light_highlight_color">#FFF3E0</color>
     <color name="highlight_text_color">#FF7043</color>
-
+    <color name="blue">#4285F4</color>
 </resources>
