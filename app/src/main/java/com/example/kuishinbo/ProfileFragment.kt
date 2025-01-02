@@ -123,9 +123,9 @@ class ProfileFragment : Fragment() {
                         val pinList = querySnapshot.documents.map { it.getString("imageUrl") }
                         val pinDates = querySnapshot.documents.map { it.getTimestamp("timestamp") }
 
-                        if (pinList.size < 3) {
+                        if (pinList.size <= 3) {
                             pinList.forEachIndexed { index, imageUrl ->
-                                if (imageUrl != null && index < 3) {
+                                if (imageUrl != null && index <= 3) {
                                     val timestamp = pinDates.getOrNull(index)?.toDate()
                                     val dateFormatted = timestamp?.let { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(it) }
 
