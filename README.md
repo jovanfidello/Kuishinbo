@@ -1,7 +1,7 @@
 # Kuishinbo
 
 ## LINK VIDEO DEMO
-https://drive.google.com/file/d/1_xlVdhzHRAB39aMgJCgOaaSRyRgXwp0N/view?usp=drive_link
+https://drive.google.com/file/d/145zFmlSdlWiKxmk7PNjxG2Esnmepuenw/view?usp=sharing
 
 ### Kelompok 5
 - Friedrich Litani Santoso  (00000068855)
