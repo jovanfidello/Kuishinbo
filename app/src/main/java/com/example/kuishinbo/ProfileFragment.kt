@@ -123,9 +123,9 @@ class ProfileFragment : Fragment() {
                         val pinList = querySnapshot.documents.map { it.getString("imageUrl") }
                         val pinDates = querySnapshot.documents.map { it.getTimestamp("timestamp") }
 
-                        if (pinList.size <= 3) {
+                        if (pinList.size < 3) {
                             pinList.forEachIndexed { index, imageUrl ->
-                                if (imageUrl != null && index <= 3) {
+                                if (imageUrl != null && index < 3) {
                                     val timestamp = pinDates.getOrNull(index)?.toDate()
                                     val dateFormatted = timestamp?.let { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(it) }
 
@@ -133,20 +133,6 @@ class ProfileFragment : Fragment() {
                                         0 -> pinsContain1
                                         1 -> pinsContain2
                                         2 -> pinsContain3
-                                        else -> null
-                                    }
-
-                                    val dateMonthDayTextView = when (index) {
-                                        0 -> pinDateMonthDay1
-                                        1 -> pinDateMonthDay2
-                                        2 -> pinDateMonthDay3
-                                        else -> null
-                                    }
-
-                                    val dateYearTextView = when (index) {
-                                        0 -> pinDateYear1
-                                        1 -> pinDateYear2
-                                        2 -> pinDateYear3
                                         else -> null
                                     }
 
@@ -159,18 +145,22 @@ class ProfileFragment : Fragment() {
                                             .skipMemoryCache(false)
                                             .transition(DrawableTransitionOptions.withCrossFade())
                                             .apply(RequestOptions.bitmapTransform(RoundedCorners(20)))
-                                            .centerCrop()
                                             .into(it)
 
                                         // Set the date text for the pin
-                                        if (!dateFormatted.isNullOrEmpty()) {
-                                            dateMonthDayTextView?.text = dateFormatted.substring(0, 6)
-                                            dateYearTextView?.text = dateFormatted.substring(7)
-                                            dateMonthDayTextView?.visibility = View.VISIBLE
-                                            dateYearTextView?.visibility = View.VISIBLE
-                                        } else {
-                                            dateMonthDayTextView?.visibility = View.GONE
-                                            dateYearTextView?.visibility = View.GONE
+                                        when (index) {
+                                            0 -> {
+                                                pinDateMonthDay1.text = dateFormatted?.substring(0, 6)
+                                                pinDateYear1.text = dateFormatted?.substring(7)
+                                            }
+                                            1 -> {
+                                                pinDateMonthDay2.text = dateFormatted?.substring(0, 6)
+                                                pinDateYear2.text = dateFormatted?.substring(7)
+                                            }
+                                            2 -> {
+                                                pinDateMonthDay3.text = dateFormatted?.substring(0, 6)
+                                                pinDateYear3.text = dateFormatted?.substring(7)
+                                            }
                                         }
 
                                         it.setOnClickListener {
@@ -184,25 +174,6 @@ class ProfileFragment : Fragment() {
                                                 ?.replace(R.id.fragment_container, memoriesFragment)
                                                 ?.addToBackStack(null)
                                                 ?.commit()
-                                        }
-                                    }
-                                } else {
-                                    // Hide the image view and date if no image URL exists
-                                    when (index) {
-                                        0 -> {
-                                            pinsContain1.visibility = View.GONE
-                                            pinDateMonthDay1.visibility = View.GONE
-                                            pinDateYear1.visibility = View.GONE
-                                        }
-                                        1 -> {
-                                            pinsContain2.visibility = View.GONE
-                                            pinDateMonthDay2.visibility = View.GONE
-                                            pinDateYear2.visibility = View.GONE
-                                        }
-                                        2 -> {
-                                            pinsContain3.visibility = View.GONE
-                                            pinDateMonthDay3.visibility = View.GONE
-                                            pinDateYear3.visibility = View.GONE
                                         }
                                     }
                                 }
